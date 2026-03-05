@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Treck{% endblock %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f4f6f8;
+            color: #1f2937;
+        }
+        header {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav a {
+            color: #ffffff;
+            text-decoration: none;
+            margin-left: 16px;
+        }
+        main {
+            max-width: 960px;
+            margin: 24px auto;
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        th, td {
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            padding: 10px;
+            vertical-align: top;
+        }
+        .btn {
+            display: inline-block;
+            background: #0f172a;
+            color: #ffffff;
+            border: 0;
+            padding: 10px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .form-row {
+            margin-bottom: 12px;
+        }
+        .helptext {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        .errorlist {
+            color: #b91c1c;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <strong>Treck</strong>
+        <nav>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}">Dashboard</a>
+                <a href="{% url 'articulos_list' %}">Articulos</a>
+                <a href="{% url 'admin:index' %}">Admin</a>
+                <form method="post" action="{% url 'logout' %}" style="display: inline; margin-left: 16px;">
+                    {% csrf_token %}
+                    <button type="submit" style="background: none; border: 0; color: #ffffff; cursor: pointer; padding: 0;">Salir</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">Login</a>
+                <a href="{% url 'register' %}">Registro</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

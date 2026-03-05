@@ -137,6 +137,7 @@ No utilices soluciones innecesariamente complejas ni dependencias excesivas.
 - Al agregar una nueva app de Django:
   - Regístrala en `INSTALLED_APPS` en `treck/settings.py`.
   - Registra sus rutas en `treck/urls.py` (normalmente con `include(...)`).
+- En modelos de dominio principales, define `Meta.db_table` con nombre simple en singular para evitar duplicaciones tipo `app_model` (por ejemplo, `articulo`, `simulacion`).
 - Mantén los secretos fuera del código fuente cuando se endurezca para producción.
 - Trata `DEBUG = True` y `ALLOWED_HOSTS = []` como valores exclusivos de desarrollo.
 - No edites artefactos `__pycache__`; modifica solo archivos fuente.

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro | Treck{% endblock %}
+
+{% block content %}
+<h1>Registro</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+        <div class="form-row">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label><br>
+            {{ field }}
+            {{ field.errors }}
+            {% if field.help_text %}
+                <div class="helptext">{{ field.help_text }}</div>
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button class="btn" type="submit">Crear cuenta</button>
+</form>
+{% endblock %}

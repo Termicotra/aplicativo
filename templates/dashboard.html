@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | Treck{% endblock %}
+
+{% block content %}
+<h1>Dashboard de simulaciones</h1>
+<p>Bienvenido, {{ user.username }}.</p>
+
+{% if simulaciones %}
+<table>
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Articulo</th>
+            <th>Resultado</th>
+            <th>Feedback</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for simulacion in simulaciones %}
+        <tr>
+            <td>{{ simulacion.fecha|date:'d/m/Y H:i' }}</td>
+            <td>{{ simulacion.articulo.titulo }}</td>
+            <td>{{ simulacion.resultado }}</td>
+            <td>{{ simulacion.feedback }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Aun no tienes simulaciones registradas.</p>
+{% endif %}
+{% endblock %}

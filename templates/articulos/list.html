@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Articulos | Treck{% endblock %}
+
+{% block content %}
+<h1>Lista de articulos</h1>
+
+{% if articulos %}
+<table>
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Titulo</th>
+            <th>Fuente</th>
+            <th>URL</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for articulo in articulos %}
+        <tr>
+            <td>{{ articulo.fecha|date:'d/m/Y' }}</td>
+            <td>{{ articulo.titulo }}</td>
+            <td>{{ articulo.fuente }}</td>
+            <td><a href="{{ articulo.url }}" target="_blank" rel="noopener noreferrer">Abrir</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No hay articulos cargados.</p>
+{% endif %}
+{% endblock %}
