@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Contexto del ataque | Treck{% endblock %}
+
+{% block content %}
+<h1>Contexto del ataque</h1>
+
+<p><strong>Articulo:</strong> {{ articulo.titulo }}</p>
+<p><strong>Fuente:</strong> {{ articulo.fuente }}</p>
+<p><strong>Canal detectado:</strong> {{ contexto.canal_ataque }}</p>
+<p><strong>URL:</strong> <a href="{{ articulo.url }}" target="_blank" rel="noopener noreferrer">Abrir articulo original</a></p>
+
+<section>
+    <h2>Proceso del ataque</h2>
+    <p>{{ contexto.proceso_ataque|default:'Sin información extraída.' }}</p>
+</section>
+
+<section>
+    <h2>Secuencia del ataque</h2>
+    <p>{{ contexto.secuencia_ataque|default:'Sin información extraída.' }}</p>
+</section>
+
+<section>
+    <h2>Recomendaciones</h2>
+    <p>{{ contexto.recomendaciones|default:'Sin información extraída.' }}</p>
+</section>
+
+<section>
+    <h2>Ejemplos / técnicas</h2>
+    <p>{{ contexto.ejemplos_ataque|default:'Sin información extraída.' }}</p>
+</section>
+
+<section>
+    <h2>Origen del ataque</h2>
+    <p>{{ contexto.origen_ataque|default:'Sin información extraída.' }}</p>
+</section>
+
+<section>
+    <h2>Objetivo del ataque</h2>
+    <p>{{ contexto.objetivo_ataque|default:'Sin información extraída.' }}</p>
+</section>
+
+<p><a href="{% url 'articulos_list' %}">Volver a articulos</a></p>
+{% endblock %}

@@ -1,0 +1,490 @@
+{% extends 'base.html' %}
+
+{% block title %}Simulaciones{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --paper: #f8f6ef;
+        --ink: #1f2a30;
+        --accent: #c4631f;
+        --accent-soft: #f5d8bf;
+        --ok: #1f7a4d;
+        --danger: #b5422c;
+        --panel: #fffefb;
+        --line: #d7cfbf;
+    }
+
+    .sim-wrap {
+        max-width: 980px;
+        margin: 0 auto;
+    }
+
+    .hero {
+        background: radial-gradient(circle at 15% 20%, #ffe9cf 0%, transparent 45%),
+                    radial-gradient(circle at 85% 15%, #d7f0ea 0%, transparent 42%),
+                    linear-gradient(135deg, #f7f2e8, #f2f8f5);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 12px 24px rgba(31, 42, 48, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .hero h2 {
+        margin: 0 0 8px;
+        font-size: 1.8rem;
+        letter-spacing: 0.2px;
+        color: var(--ink);
+    }
+
+    .hero p {
+        margin: 0 0 16px;
+        color: #41515a;
+    }
+
+    .primary-btn {
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 18px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .primary-btn:hover {
+        opacity: 0.95;
+    }
+
+    .message-shell {
+        max-width: 760px;
+        margin: 0 auto 24px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 16px 28px rgba(12, 22, 28, 0.1);
+        animation: fadeInUp 0.35s ease;
+    }
+
+    .message-shell.outlook {
+        border: 1px solid #c7d7ee;
+        background: #f8fbff;
+    }
+
+    .message-shell.whatsapp {
+        border: 1px solid #cde7d8;
+        background: #e7f4ec;
+    }
+
+    .outlook-topbar {
+        padding: 10px 14px;
+        background: #0f4fa8;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.92rem;
+    }
+
+    .mail-meta {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        gap: 8px;
+        padding: 12px 14px;
+        background: #ffffff;
+        border-bottom: 1px solid #dbe7f6;
+        font-size: 0.92rem;
+    }
+
+    .mail-meta strong {
+        color: #41556e;
+    }
+
+    .attachments-box {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .attachment-chip {
+        display: inline-block;
+        border: 1px solid #c7d7ee;
+        border-radius: 999px;
+        padding: 4px 10px;
+        background: #eef4ff;
+        color: #294c78;
+        font-size: 0.85rem;
+    }
+
+    .whatsapp-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 12px 14px;
+        background: #1f7a4d;
+        color: #fff;
+        font-weight: 700;
+    }
+
+    .chat-wrap {
+        padding: 14px;
+        background-image: linear-gradient(0deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25));
+    }
+
+    .chat-bubble {
+        display: inline-block;
+        max-width: 88%;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .message-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        background: var(--paper);
+        border-bottom: 1px solid var(--line);
+        padding: 12px 14px;
+        color: #3d4c54;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: #6e3812;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .message-body {
+        padding: 18px;
+        line-height: 1.55;
+        color: #24333a;
+        white-space: pre-wrap;
+    }
+
+    .answer-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #fff;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+
+    .answer-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .vote-btn {
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .vote-btn.phishing {
+        background: #fff1ef;
+        color: var(--danger);
+    }
+
+    .vote-btn.safe {
+        background: #eef9f2;
+        color: var(--ok);
+    }
+
+    .result {
+        border-left: 4px solid var(--line);
+        background: #fff;
+        border-radius: 10px;
+        padding: 14px;
+        margin: 16px 0;
+    }
+
+    .result.ok {
+        border-left-color: var(--ok);
+        background: #eff9f3;
+    }
+
+    .result.bad {
+        border-left-color: var(--danger);
+        background: #fff1ef;
+    }
+
+    .source {
+        margin-top: 14px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--line);
+        color: #40525b;
+        font-size: 0.95rem;
+    }
+
+    .history {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #fff;
+        padding: 14px;
+    }
+
+    .history ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 700px) {
+        .hero {
+            padding: 16px;
+        }
+
+        .hero h2 {
+            font-size: 1.5rem;
+        }
+
+        .message-body {
+            padding: 14px;
+        }
+    }
+</style>
+
+<div class="sim-wrap">
+    <section class="hero">
+        <h2>Laboratorio de Simulaciones</h2>
+        <p>Genera un escenario realista, evalua si es phishing y recibe retroalimentacion contextual basada en articulos recientes.</p>
+        <button class="primary-btn" onclick="cargarSimulacionAleatoria()">Cargar Simulacion</button>
+    </section>
+
+    <div id="simulacion-container"></div>
+
+    <section class="history">
+        <h3>Ultimas simulaciones</h3>
+        {% if simulaciones_historial %}
+            <ul>
+                {% for item in simulaciones_historial %}
+                    <li>
+                        {{ item.fecha_creacion|date:'d/m/Y H:i' }} - {{ item.resultado }} - {{ item.articulo.titulo }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aun no tienes simulaciones registradas.</p>
+        {% endif %}
+    </section>
+</div>
+
+<script>
+let simulacionActual = null;
+let respuestaRegistrada = false;
+
+async function cargarSimulacionAleatoria() {
+    try {
+        const response = await fetch('/api/simulaciones/obtener-aleatoria/');
+        const data = await response.json();
+        simulacionActual = data;
+        respuestaRegistrada = false;
+        mostrarSimulacion(data);
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('simulacion-container').innerHTML = 
+            '<p style="color: red;">Error al cargar simulación. Intenta nuevamente.</p>';
+    }
+}
+
+function mostrarSimulacion(sim) {
+    const container = document.getElementById('simulacion-container');
+    const tipoMensaje = sim.tipo_mensaje || 'correo';
+    
+    let contenidoHTML = '';
+    
+    if (tipoMensaje === 'whatsapp' || tipoMensaje === 'sms') {
+        contenidoHTML = `
+            <article class="message-shell whatsapp">
+                <div class="whatsapp-head">
+                    <span>WhatsApp</span>
+                    <span>${tipoMensaje.toUpperCase()}</span>
+                </div>
+                <div class="chat-wrap">
+                    <div class="chat-bubble">
+                        <div class="message-body">${escapeHTML(sim.simulacion_texto)}</div>
+                    </div>
+                </div>
+            </article>
+        `;
+    } else {
+        const adjuntos = sim.attachments && sim.attachments.length > 0
+            ? sim.attachments.map(a => `<span class="attachment-chip">${escapeHTML(a)}</span>`).join('')
+            : '<span>Sin adjuntos</span>';
+        
+        contenidoHTML = `
+            <article class="message-shell outlook">
+                <div class="outlook-topbar">Outlook - Bandeja de entrada</div>
+                <div class="mail-meta">
+                    <strong>De:</strong>
+                    <span>${escapeHTML(sim.sender_email)}</span>
+                    <strong>Para:</strong>
+                    <span>tu@correo.com</span>
+                    <strong>Asunto:</strong>
+                    <span>${escapeHTML(sim.subject)}</span>
+                    <strong>Adjuntos:</strong>
+                    <span class="attachments-box">${adjuntos}</span>
+                </div>
+                <header class="message-head">
+                    <strong>Mensaje simulado</strong>
+                    <span class="badge">${tipoMensaje}</span>
+                </header>
+                <div class="message-body">${escapeHTML(sim.simulacion_texto)}</div>
+            </article>
+        `;
+    }
+    
+    if (!respuestaRegistrada) {
+        contenidoHTML += `
+            <section class="answer-card">
+                <h3>Tu decision</h3>
+                <p>Marca si consideras que este mensaje es un intento de phishing.</p>
+                <div class="answer-row">
+                    <button class="vote-btn phishing" onclick="registrarRespuesta(${sim.simulacion_id}, 'phishing')">Es Phishing</button>
+                    <button class="vote-btn safe" onclick="registrarRespuesta(${sim.simulacion_id}, 'no-phishing')">No es Phishing</button>
+                </div>
+            </section>
+        `;
+    }
+    
+    container.innerHTML = contenidoHTML;
+}
+
+async function registrarRespuesta(simId, respuesta) {
+    try {
+        const response = await fetch('/api/simulaciones/registrar-respuesta/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                simulacion_id: simId,
+                respuesta_usuario: respuesta
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al registrar respuesta');
+        }
+        
+        const data = await response.json();
+        respuestaRegistrada = true;
+        mostrarResultado(data);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al registrar tu respuesta. Intenta nuevamente.');
+    }
+}
+
+function mostrarResultado(resultado) {
+    const container = document.getElementById('simulacion-container');
+    
+    let resultadoHTML = '';
+    
+    // Mostrar feedback del resultado
+    if (resultado.fue_correcto) {
+        resultadoHTML = `
+            <section class="answer-card">
+                <div class="result ok">
+                    <strong>Resultado: Acertaste!</strong>
+                    <p>Correctamente identificaste que este mensaje ${resultado.es_phishing_real ? 'ES' : 'NO ES'} phishing.</p>
+                </div>
+        `;
+    } else {
+        resultadoHTML = `
+            <section class="answer-card">
+                <div class="result bad">
+                    <strong>Resultado: No acertaste.</strong>
+                    <p>Este mensaje ${resultado.es_phishing_real ? 'SÍ ES' : 'NO ES'} phishing, pero respondiste lo opuesto.</p>
+                </div>
+        `;
+    }
+    
+    resultadoHTML += `
+                <h4>Resumen educativo</h4>
+                <p>${escapeHTML(resultado.resumen_justificacion)}</p>
+                
+                <div class="source">
+                    <strong>Artículo de origen:</strong> ${escapeHTML(resultado.articulo_titulo)}
+                    <br>
+                    <a href="${resultado.articulo_url}" target="_blank" rel="noopener noreferrer">Ver artículo fuente</a>
+                </div>
+                
+                <button class="primary-btn" style="margin-top: 12px; width: 100%;" onclick="generarOpuesto(${resultado.simulacion_id})">Opuesto</button>
+            </section>
+        `;
+    
+    container.innerHTML += resultadoHTML;
+}
+
+async function generarOpuesto(simId) {
+    try {
+        const response = await fetch('/api/simulaciones/opuesto/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ simulacion_id: simId })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al generar opuesto');
+        }
+        
+        const data = await response.json();
+        simulacionActual = data;
+        respuestaRegistrada = false;
+        mostrarSimulacion(data);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al generar opuesto. Intenta nuevamente.');
+    }
+}
+
+function escapeHTML(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

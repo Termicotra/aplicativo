@@ -13,6 +13,7 @@
             <th>Titulo</th>
             <th>Fuente</th>
             <th>URL</th>
+            <th>Contexto</th>
         </tr>
     </thead>
     <tbody>
@@ -22,6 +23,7 @@
             <td>{{ articulo.titulo }}</td>
             <td>{{ articulo.fuente }}</td>
             <td><a href="{{ articulo.url }}" target="_blank" rel="noopener noreferrer">Abrir</a></td>
+            <td><a href="{% url 'articulo_contexto' articulo.id %}">Ver informacion</a></td>
         </tr>
         {% endfor %}
     </tbody>

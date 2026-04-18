@@ -5,8 +5,14 @@ from .models import Simulacion
 
 @admin.register(Simulacion)
 class SimulacionAdmin(admin.ModelAdmin):
-	list_display = ('usuario', 'articulo', 'resultado', 'fecha')
-	search_fields = ('usuario__username', 'articulo__titulo', 'feedback')
-	list_filter = ('resultado', 'fecha')
+	list_display = ('usuario', 'articulo', 'es_phishing', 'resultado', 'fecha_creacion')
+	search_fields = (
+		'usuario__username',
+		'articulo__titulo',
+		'simulacion_texto',
+		'resumen_justificacion',
+		'feedback',
+	)
+	list_filter = ('resultado', 'es_phishing', 'fecha_creacion')
 
 # Register your models here.

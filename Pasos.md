@@ -36,13 +36,12 @@
 
    * `users` → manejo de usuarios, autenticación
    * `simulaciones` → registro de simulaciones de phishing
-   * `articles` → base de conocimiento para RAG
-3. Configurar **PostgreSQL** como base de datos.
+   * `articulos` → base de conocimiento para RAG
 4. Crear modelos iniciales:
 
    * **Usuario:** username, email, password (hashed)
-   * **Artículo:** título, contenido, fuente, url, fecha
-   * **Simulación:** usuario, artículo, resultado, feedback, fecha
+   * **Articulo:** titulo, contenido, fuente, url, fecha
+   * **Simulacion:** usuario, articulo, resultado, feedback, fecha
 5. Crear **panel admin Django** para gestionar artículos y simulaciones.
 6. Crear **endpoints REST básicos** con Django REST Framework:
 
@@ -66,7 +65,7 @@
 
 1. Crear módulo `ai_service.py` en Django:
 
-   * Conecta con OpenAI o DeepSeek
+   * Conecta con OpenAI 
    * Recibe prompt + artículos recientes
    * Devuelve simulación y feedback
 2. Crear endpoint `/api/generar_simulacion/`

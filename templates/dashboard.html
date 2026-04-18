@@ -5,6 +5,9 @@
 {% block content %}
 <h1>Dashboard de simulaciones</h1>
 <p>Bienvenido, {{ user.username }}.</p>
+<p>
+    <a href="{% url 'simulaciones_section' %}">Ir a la seccion Simulaciones</a>
+</p>
 
 {% if simulaciones %}
 <table>
@@ -12,6 +15,8 @@
         <tr>
             <th>Fecha</th>
             <th>Articulo</th>
+            <th>Simulacion</th>
+            <th>Resumen (por que se genero)</th>
             <th>Resultado</th>
             <th>Feedback</th>
         </tr>
@@ -19,8 +24,14 @@
     <tbody>
         {% for simulacion in simulaciones %}
         <tr>
-            <td>{{ simulacion.fecha|date:'d/m/Y H:i' }}</td>
-            <td>{{ simulacion.articulo.titulo }}</td>
+            <td>{{ simulacion.fecha_creacion|date:'d/m/Y H:i' }}</td>
+            <td>
+                {{ simulacion.articulo.titulo }}
+                <br>
+                <small><a href="{{ simulacion.articulo.url }}" target="_blank" rel="noopener noreferrer">Ver articulo origen</a></small>
+            </td>
+            <td>{{ simulacion.simulacion_texto }}</td>
+            <td>{{ simulacion.resumen_justificacion }}</td>
             <td>{{ simulacion.resultado }}</td>
             <td>{{ simulacion.feedback }}</td>
         </tr>
