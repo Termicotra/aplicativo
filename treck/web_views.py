@@ -3,10 +3,11 @@ import re
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.db.models import Exists, OuterRef
+from django.db.models import Count, Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from articulos.models import Articulo
+from capacitaciones.models import Ejercicio, OpcionEjercicio, RespuestaEjercicio
 from simulaciones.ai_service import AIServiceError, generar_simulacion_y_feedback
 from simulaciones.models import Simulacion
 from .forms import UserRegisterForm
@@ -75,7 +76,31 @@ def dashboard_view(request):
         .select_related('articulo')
         .order_by('-fecha_creacion')[:20]
     )
-    return render(request, 'dashboard.html', {'simulaciones': simulaciones})
+    respuestas_qs = (
+        RespuestaEjercicio.objects.filter(usuario=request.user)
+        .select_related('ejercicio', 'opcion_seleccionada')
+        .order_by('-fecha_respuesta')
+    )
+    progreso = respuestas_qs.aggregate(
+        total=Count('id'),
+        aciertos=Count('id', filter=Q(es_correcta=True)),
+        errores=Count('id', filter=Q(es_correcta=False)),
+    )
+    total_respuestas = progreso['total'] or 0
+    aciertos = progreso['aciertos'] or 0
+    precision = round((aciertos / total_respuestas) * 100, 2) if total_respuestas else 0
+
+    context = {
+        'simulaciones': simulaciones,
+        'progreso_capacitaciones': {
+            'total': total_respuestas,
+            'aciertos': aciertos,
+            'errores': progreso['errores'] or 0,
+            'precision': precision,
+        },
+        'respuestas_capacitaciones_recientes': respuestas_qs[:10],
+    }
+    return render(request, 'dashboard.html', context)
 
 
 @login_required
@@ -262,3 +287,87 @@ def simulaciones_section_view(request):
         'simulaciones_historial': simulaciones_historial,
     }
     return render(request, 'simulaciones/section.html', context)
+
+
+@login_required
+def capacitaciones_section_view(request):
+    ejercicios_qs = Ejercicio.objects.filter(activo=True).prefetch_related('opciones').order_by('id')
+    ejercicios = list(ejercicios_qs)
+
+    if not ejercicios:
+        return render(
+            request,
+            'capacitaciones/section.html',
+            {
+                'ejercicio': None,
+                'resultado': None,
+                'ejercicios_total': 0,
+                'indice_actual': 0,
+                'prev_ejercicio_id': None,
+                'next_ejercicio_id': None,
+            },
+        )
+
+    ejercicio_id_query = request.GET.get('ejercicio')
+    ejercicio_actual = ejercicios[0]
+
+    if ejercicio_id_query and ejercicio_id_query.isdigit():
+        for ejercicio in ejercicios:
+            if ejercicio.id == int(ejercicio_id_query):
+                ejercicio_actual = ejercicio
+                break
+
+    resultado = None
+    if request.method == 'POST':
+        ejercicio_id = request.POST.get('ejercicio_id', '')
+        opcion_id = request.POST.get('opcion_id', '')
+
+        if not ejercicio_id.isdigit() or not opcion_id.isdigit():
+            messages.error(request, 'Debes seleccionar una opcion valida.')
+            return redirect('capacitaciones_section')
+
+        ejercicio_actual = get_object_or_404(Ejercicio, id=int(ejercicio_id), activo=True)
+        opcion = get_object_or_404(OpcionEjercicio, id=int(opcion_id), ejercicio=ejercicio_actual)
+        opcion_correcta = get_object_or_404(OpcionEjercicio, ejercicio=ejercicio_actual, es_correcta=True)
+        es_correcta = opcion.es_correcta
+
+        if es_correcta:
+            feedback = (
+                opcion.retroalimentacion_opcion
+                or 'Respuesta correcta. Buen trabajo identificando la situacion.'
+            )
+            messages.success(request, 'Respuesta correcta.')
+        else:
+            feedback = (
+                opcion.retroalimentacion_opcion
+                or ejercicio_actual.retroalimentacion
+                or 'Respuesta incorrecta. Revisa el concepto y vuelve a intentar.'
+            )
+            messages.error(request, 'Respuesta incorrecta.')
+
+        resultado = {
+            'es_correcta': es_correcta,
+            'feedback': feedback,
+            'opcion_correcta': opcion_correcta,
+        }
+        RespuestaEjercicio.objects.create(
+            usuario=request.user,
+            ejercicio=ejercicio_actual,
+            opcion_seleccionada=opcion,
+            es_correcta=es_correcta,
+        )
+
+    ids = [item.id for item in ejercicios]
+    indice_actual = ids.index(ejercicio_actual.id)
+    prev_ejercicio_id = ids[indice_actual - 1] if indice_actual > 0 else None
+    next_ejercicio_id = ids[indice_actual + 1] if indice_actual < len(ids) - 1 else None
+
+    context = {
+        'ejercicio': ejercicio_actual,
+        'resultado': resultado,
+        'ejercicios_total': len(ejercicios),
+        'indice_actual': indice_actual + 1,
+        'prev_ejercicio_id': prev_ejercicio_id,
+        'next_ejercicio_id': next_ejercicio_id,
+    }
+    return render(request, 'capacitaciones/section.html', context)

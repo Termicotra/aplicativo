@@ -187,8 +187,8 @@ class ObtenerSimulacionAleatoria(APIView):
 
 class OpuestoSimulacion(APIView):
     """
-    Regenera SOLO la simulacion seleccionada con el tipo opuesto
-    (phishing <-> legitimo) usando el mismo articulo.
+    Devuelve la simulacion opuesta ya existente para el mismo articulo
+    (phishing <-> legitimo). Si no existe, la genera como respaldo.
     """
     permission_classes = [permissions.AllowAny]
 
@@ -204,6 +204,35 @@ class OpuestoSimulacion(APIView):
         simulacion_vieja = get_object_or_404(Simulacion, id=simulacion_id)
         articulo = simulacion_vieja.articulo
         es_phishing_opuesto = not simulacion_vieja.es_phishing
+
+        simulacion_opuesta = (
+            Simulacion.objects.filter(articulo=articulo, es_phishing=es_phishing_opuesto)
+            .exclude(id=simulacion_vieja.id)
+            .order_by('-fecha_creacion')
+            .first()
+        )
+
+        if simulacion_opuesta:
+            simulacion_opuesta.es_mostrada = True
+            simulacion_opuesta.tipo_generacion = 'regenerado'
+            simulacion_opuesta.save(update_fields=['es_mostrada', 'tipo_generacion'])
+
+            return Response(
+                {
+                    'simulacion_id': simulacion_opuesta.id,
+                    'articulo_id': simulacion_opuesta.articulo.id,
+                    'articulo_titulo': simulacion_opuesta.articulo.titulo,
+                    'es_phishing': simulacion_opuesta.es_phishing,
+                    'tipo_mensaje': simulacion_opuesta.tipo_mensaje,
+                    'sender_email': simulacion_opuesta.sender_email,
+                    'subject': simulacion_opuesta.subject,
+                    'attachments': simulacion_opuesta.attachments,
+                    'enlace_senuelo': simulacion_opuesta.enlace_senuelo,
+                    'simulacion_texto': simulacion_opuesta.simulacion_texto,
+                    'entidad_objetivo': simulacion_opuesta.entidad_objetivo,
+                },
+                status=status.HTTP_200_OK,
+            )
 
         articulo_base = {
             'titulo': articulo.titulo,
@@ -247,7 +276,7 @@ class OpuestoSimulacion(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        # Actualizar la MISMA simulacion (no crear ni borrar otras filas).
+        # Respaldo: actualizar la MISMA simulacion solo si no existe la opuesta ya generada.
         nueva_simulacion = simulacion_vieja
         nueva_simulacion.es_phishing = es_phishing_opuesto
         nueva_simulacion.simulacion_texto = resultado['simulacion']

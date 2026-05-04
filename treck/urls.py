@@ -30,10 +30,12 @@ urlpatterns = [
     path('registro/', web_views.register_view, name='register'),
     path('dashboard/', web_views.dashboard_view, name='dashboard'),
     path('simulaciones/', web_views.simulaciones_section_view, name='simulaciones_section'),
+    path('capacitaciones/', web_views.capacitaciones_section_view, name='capacitaciones_section'),
     path('articulos/', web_views.articulo_list_view, name='articulos_list'),
     path('articulos/<int:articulo_id>/contexto/', web_views.articulo_contexto_view, name='articulo_contexto'),
     path('admin/', admin.site.urls),
     path('api/generar_simulacion/', GenerarSimulacionAPIView.as_view(), name='api_generar_simulacion'),
     path('api/simulaciones/', include('simulaciones.urls')),
     path('api/articulos/', include('articulos.urls')),
+    path('api/capacitaciones/', include('capacitaciones.urls')),
 ]

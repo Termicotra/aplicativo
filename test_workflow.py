@@ -47,13 +47,13 @@ def test_workflow():
         content_type='application/json',
         HTTP_X_CSRFTOKEN='dummy'  # For testing
     )
-    if response.status_code != 201:
+    if response.status_code not in (200, 201):
         print(f"FAILED: Status {response.status_code}")
         print(f"Response: {response.content.decode()[:200]}")
         return False
     
     sim2 = response.json()
-    print(f"[OK] Opposite simulation generated {sim2['simulacion_id']}")
+    print(f"[OK] Opposite simulation obtained {sim2['simulacion_id']}")
     print(f"     Article: {sim2['articulo_titulo'][:50]}")
     print(f"     Type: {sim2['tipo_mensaje']}")
     print(f"     Is phishing: {sim2['es_phishing']}")

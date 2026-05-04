@@ -57,10 +57,10 @@ def test_endpoints():
     )
     print(f"Status Code: {response.status_code}")
     
-    if response.status_code == 201:
+    if response.status_code in (200, 201):
         data = response.json()
-        print(f"[OK] Opuesto generado")
-        print(f"  - Simulación ID (misma fila): {data['simulacion_id']}")
+        print(f"[OK] Opuesto obtenido")
+        print(f"  - Simulación ID: {data['simulacion_id']}")
         print(f"  - Artículo: {data['articulo_titulo']}")
         print(f"  - Es Phishing: {data['es_phishing']}")
         print(f"  - Tipo de Generación: regenerado (debe ser)")

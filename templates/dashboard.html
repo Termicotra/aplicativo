@@ -8,6 +8,44 @@
 <p>
     <a href="{% url 'simulaciones_section' %}">Ir a la seccion Simulaciones</a>
 </p>
+<p>
+    <a href="{% url 'capacitaciones_section' %}">Ir al modulo de Capacitaciones</a>
+</p>
+
+<h2>Progreso de capacitaciones</h2>
+<p>
+    Total respuestas: <strong>{{ progreso_capacitaciones.total }}</strong> |
+    Aciertos: <strong>{{ progreso_capacitaciones.aciertos }}</strong> |
+    Errores: <strong>{{ progreso_capacitaciones.errores }}</strong> |
+    Precision: <strong>{{ progreso_capacitaciones.precision }}%</strong>
+</p>
+
+{% if respuestas_capacitaciones_recientes %}
+<table>
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Tema</th>
+            <th>Pregunta</th>
+            <th>Respuesta elegida</th>
+            <th>Resultado</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for respuesta in respuestas_capacitaciones_recientes %}
+        <tr>
+            <td>{{ respuesta.fecha_respuesta|date:'d/m/Y H:i' }}</td>
+            <td>{{ respuesta.ejercicio.tema }}</td>
+            <td>{{ respuesta.ejercicio.pregunta }}</td>
+            <td>{{ respuesta.opcion_seleccionada.texto }}</td>
+            <td>{% if respuesta.es_correcta %}correcto{% else %}incorrecto{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Aun no tienes respuestas registradas en el modulo de capacitaciones.</p>
+{% endif %}
 
 {% if simulaciones %}
 <table>
