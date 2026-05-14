@@ -192,6 +192,7 @@ def simulaciones_section_view(request):
                     prompt_usuario='Generar simulacion de fraude alineada al articulo base.',
                     articulo_base=articulo_base,
                     articulos_recientes=articulos_recientes,
+                    recipient_email=request.user.email if request.user and getattr(request.user, 'email', None) else None,
                 )
             except AIServiceError as exc:
                 messages.error(request, f'No se pudo generar la simulacion: {exc}')

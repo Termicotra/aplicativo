@@ -71,6 +71,7 @@ def generate_simulations_for_articles(only_missing=True):
                         'canal_ataque': articulo.canal_ataque,
                     },
                     force_es_phishing=es_phishing,
+                    recipient_email=None,
                 )
                 
                 # Create simulation record

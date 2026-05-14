@@ -17,7 +17,7 @@ from .models import Articulo
 logger = logging.getLogger(__name__)
 
 ABC_BASE_URL = 'https://www.abc.com.py'
-ABC_SEARCH_QUERY = 'phishing'
+ABC_SEARCH_QUERIES = ('phishing', 'smishing')
 ABC_QUERYLY_KEY = '33530b56c6aa4c20'
 ABC_QUERYLY_ENDPOINT = 'https://api.queryly.com/json.aspx'
 
@@ -26,7 +26,7 @@ CERT_FEEDS = [
     'https://www.cert.gov.py/?feed=rss2',
 ]
 CERT_BASE_URL = 'https://www.cert.gov.py'
-CERT_SEARCH_TERMS = ('phishing', 'robo')
+CERT_SEARCH_TERMS = ('phishing', 'smishing', 'robo')
 CERT_EXCLUDED_PATHS = (
     '/soc-cert-py/',
 )
@@ -91,6 +91,11 @@ PHISHING_OPERATION_KEYWORDS = (
     'enlace malicioso',
     'url maliciosa',
     'bancos paraguayos',
+    'campana de smishing',
+    'sms falso',
+    'sms fraudulento',
+    'mensaje de texto falso',
+    'suplantacion por sms',
 )
 
 TECHNICAL_OBJECT_KEYWORDS = (
@@ -101,6 +106,12 @@ TECHNICAL_OBJECT_KEYWORDS = (
     'quishing',
     'deepfake de voz',
     'sms spoofing',
+    'sms clonado',
+    'spoof de sms',
+    'enlace en sms',
+    'url acortada',
+    'bit.ly',
+    'tinyurl',
 )
 
 RECOMMENDATION_KEYWORDS = (
@@ -161,6 +172,10 @@ def _fetch_xml(url: str, timeout: int = 15) -> str:
 
 def _clean_text(raw: str | None) -> str:
     value = raw or ''
+    # Normalize smart/curly quotes to straight quotes for consistent filtering
+    value = value.replace('"', '"').replace('"', '"')  # U+201C, U+201D -> "
+    value = value.replace(''', "'").replace(''', "'")  # U+2018, U+2019 -> '
+    value = value.replace('«', '"').replace('»', '"')  # U+00AB, U+00BB -> "
     # Remove html tags and collapse spaces to keep a compact RAG context.
     value = re.sub(r'<[^>]+>', ' ', value)
     value = re.sub(r'(?i)\blea\s+m[áa]s\s*:?\s*', ' ', value)
@@ -191,7 +206,44 @@ def _infer_attack_channel(text_normalized: str) -> str:
     return 'indefinido'
 
 
-def _extract_attack_context(*, title: str, content: str) -> dict[str, str]:
+def _extract_list_items_from_html(html: str, marker_text: str, max_items: int = 10) -> list[str]:
+    """
+    Extract list items (<li> elements) from a section in HTML that contains marker text.
+    For example: extract all <li> items after "ejemplos son:" or "se recomienda"
+    """
+    try:
+        # Find the section containing the marker
+        marker_pattern = re.escape(marker_text)
+        section_match = re.search(
+            rf'{marker_pattern}.*?(?=<(?:h\d|p|div)[^>]*>|$)',
+            html,
+            re.IGNORECASE | re.DOTALL
+        )
+        if not section_match:
+            return []
+        
+        section_html = section_match.group(0)
+        
+        # Extract all <li> items from this section
+        lis = re.findall(r'<li[^>]*>(.*?)</li>', section_html, re.IGNORECASE | re.DOTALL)
+        
+        # Clean and return
+        items = []
+        for li in lis[:max_items]:
+            cleaned = re.sub(r'<[^>]+>', '', li)
+            cleaned = cleaned.replace('&ldquo;', '"').replace('&rdquo;', '"')
+            cleaned = cleaned.replace('&lsquo;', "'").replace('&rsquo;', "'")
+            cleaned = cleaned.replace('&amp;', '&')
+            cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+            if cleaned:
+                items.append(cleaned)
+        
+        return items
+    except Exception:
+        return []
+
+
+def _extract_attack_context(*, title: str, content: str, html: str = '') -> dict[str, str]:
     sentences = _split_sentences(f'{title}. {content}')
     normalized_sentences = [_normalize_for_match(item) for item in sentences]
 
@@ -237,6 +289,17 @@ def _extract_attack_context(*, title: str, content: str) -> dict[str, str]:
 
         if not target_line and any(marker in normalized for marker in TARGET_MARKERS):
             target_line = raw
+
+    # Extract structured list items from HTML if available
+    if html:
+        list_examples = _extract_list_items_from_html(html, 'ejemplos son', max_items=10)
+        list_recommendations = _extract_list_items_from_html(html, 'se recomienda', max_items=10)
+        
+        # Prioritize list items over sentence-based extraction
+        if list_examples:
+            example_lines.extend(list_examples)
+        if list_recommendations:
+            recommendation_lines.extend(list_recommendations)
 
     full_text_normalized = _normalize_for_match(f'{title} {content}')
     channel = _infer_attack_channel(full_text_normalized)
@@ -288,6 +351,29 @@ def _enrich_article_content(url: str, fallback: str) -> str:
     return detailed[:5000]
 
 
+def _enrich_article_content_with_html(url: str, fallback: str) -> tuple[str, str]:
+    """
+    Fetch article content and return both enriched content AND the raw HTML.
+    Used to extract structured data like lists.
+    Returns: (enriched_content, html)
+    """
+    try:
+        html = _fetch_xml(url)
+    except (URLError, TimeoutError, ValueError):
+        return (fallback, '')
+
+    detailed = _extract_paragraph_text(html)
+    if not detailed:
+        return (fallback, html)
+
+    if fallback and fallback not in detailed:
+        content = f'{fallback} {detailed}'[:5000]
+    else:
+        content = detailed[:5000]
+    
+    return (content, html)
+
+
 def _is_paraguay_relevant(*, title: str, content: str, url: str) -> bool:
     combined = _normalize_for_match(f'{title} {content}')
     if any(term in combined for term in PARAGUAY_KEYWORDS):
@@ -319,6 +405,14 @@ def _has_attack_flow_description(*, title: str, content: str) -> bool:
 
     # CERT often describes campaign mechanics without explicit "primero/luego" wording.
     if operation_hits >= 2:
+        return True
+
+    # Educational articles about attack techniques (e.g., "que es smishing") count too
+    if technical_hit and operation_hits >= 1:
+        return True
+
+    # Any technical hit alone for educational/informational articles
+    if technical_hit:
         return True
 
     return False
@@ -513,12 +607,12 @@ def _scrape_cert_from_search(max_items: int) -> list[dict[str, Any]]:
             if parsed_date is None:
                 continue
 
-            enriched_content = _enrich_article_content(url, row['contenido'] or DEFAULT_CONTENT)
+            enriched_content, article_html = _enrich_article_content_with_html(url, row['contenido'] or DEFAULT_CONTENT)
 
             article = {
                 'titulo': row['titulo'][:255],
                 'contenido': enriched_content[:5000],
-                **_extract_attack_context(title=row['titulo'], content=enriched_content),
+                **_extract_attack_context(title=row['titulo'], content=enriched_content, html=article_html),
                 'fuente': SOURCE_CERT,
                 'url': url,
                 'fecha': parsed_date,
@@ -541,44 +635,53 @@ def _scrape_cert_from_search(max_items: int) -> list[dict[str, Any]]:
 
 def _scrape_abc_from_search(max_items: int) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
-    end_index = 0
-    batch_size = min(20, max_items)
+    target_items = max(1, max_items // len(ABC_SEARCH_QUERIES))
 
-    while len(items) < max_items:
-        search_url = (
-            f'{ABC_QUERYLY_ENDPOINT}?queryly_key={ABC_QUERYLY_KEY}'
-            f'&query={ABC_SEARCH_QUERY}&endindex={end_index}&batchsize={batch_size}'
-            '&showfaceted=true'
-        )
-
-        try:
-            payload = _fetch_xml(search_url)
-        except URLError as exc:
-            logger.warning('Failed ABC search request %s: %s', search_url, exc)
+    for query in ABC_SEARCH_QUERIES:
+        if len(items) >= max_items:
             break
 
-        try:
-            data = json.loads(payload)
-        except json.JSONDecodeError as exc:
-            logger.warning('Invalid JSON returned from ABC search endpoint: %s', exc)
-            break
+        end_index = 0
+        batch_size = min(20, target_items)
+        query_items = []
 
-        batch = data.get('items', [])
-        if not batch:
-            break
+        while len(query_items) < target_items:
+            search_url = (
+                f'{ABC_QUERYLY_ENDPOINT}?queryly_key={ABC_QUERYLY_KEY}'
+                f'&query={query}&endindex={end_index}&batchsize={batch_size}'
+                '&showfaceted=true'
+            )
 
-        for row in batch:
-            normalized = _normalize_abc_search_item(row)
-            if normalized is None:
-                continue
-
-            items.append(normalized)
-            if len(items) >= max_items:
+            try:
+                payload = _fetch_xml(search_url)
+            except URLError as exc:
+                logger.warning('Failed ABC search request %s: %s', search_url, exc)
                 break
 
-        end_index += batch_size
+            try:
+                data = json.loads(payload)
+            except json.JSONDecodeError as exc:
+                logger.warning('Invalid JSON returned from ABC search endpoint: %s', exc)
+                break
 
-    return items
+            batch = data.get('items', [])
+            if not batch:
+                break
+
+            for row in batch:
+                normalized = _normalize_abc_search_item(row)
+                if normalized is None:
+                    continue
+
+                query_items.append(normalized)
+                if len(query_items) >= target_items:
+                    break
+
+            end_index += batch_size
+
+        items.extend(query_items)
+
+    return items[:max_items]
 
 
 def _scrape_from_feeds(feed_urls: list[str], fuente: str, max_items: int) -> list[dict[str, Any]]:
@@ -680,12 +783,12 @@ def _normalize_abc_search_item(row: dict[str, Any]) -> dict[str, Any] | None:
     if not _is_recent_enough(parsed_date):
         return None
 
-    enriched_content = _enrich_article_content(link, description or DEFAULT_CONTENT)
+    enriched_content, article_html = _enrich_article_content_with_html(link, description or DEFAULT_CONTENT)
 
     normalized = {
         'titulo': title[:255],
         'contenido': enriched_content[:5000],
-        **_extract_attack_context(title=title, content=enriched_content),
+        **_extract_attack_context(title=title, content=enriched_content, html=article_html),
         'fuente': SOURCE_ABC,
         'url': link,
         'fecha': parsed_date,

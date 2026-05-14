@@ -142,6 +142,13 @@ def _normalize_lookup_key(value: str) -> str:
     return normalized
 
 
+def _slugify_ascii(value: str, fallback: str = 'item') -> str:
+    normalized = unicodedata.normalize('NFKD', value or '')
+    normalized = ''.join(ch for ch in normalized if not unicodedata.combining(ch))
+    slug = re.sub(r'[^a-z0-9]+', '-', normalized.lower()).strip('-')
+    return slug or fallback
+
+
 def _preferred_message_type_from_channel(canal_ataque: str) -> str:
     normalized = canal_ataque.strip().lower()
     if normalized in {'whatsapp', 'sms', 'correo'}:
@@ -367,7 +374,7 @@ def _fetch_page_signature(url: str) -> str:
     )
 
 
-def _extract_official_email(url: str, entity_name: str) -> str:
+def _extract_official_email(url: str, _entity_name: str) -> str:
     """
     Intenta extraer el correo oficial de contacto del sitio web de la entidad.
     Busca en enlaces de contacto, footers y páginas de contacto comunes.
@@ -540,6 +547,78 @@ def _discover_entity_url_from_web(entity_name: str, fallback_url: str) -> str:
     return ''
 
 
+def _discover_official_contact_from_web(entity_name: str, fallback_url: str) -> tuple[str, str]:
+    """
+    Attempt to discover an official entity URL and a contact email by searching the web.
+    Returns a tuple (entity_url, contact_email) where either element may be empty string if not found.
+    """
+    # Try to reuse entity discovery for URL first
+    discovered_url = _discover_entity_url_from_web(entity_name, fallback_url)
+    contact_email = ''
+
+    if discovered_url:
+        # Try to extract email from discovered URL
+        contact_email = _extract_official_email(discovered_url, entity_name)
+        if contact_email:
+            return (discovered_url, contact_email)
+
+    # If not found, perform a broader search and try candidate hosts
+    search_query = quote_plus(f'{entity_name} contacto correo sitio oficial Paraguay')
+    search_url = f'https://duckduckgo.com/html/?q={search_query}'
+
+    try:
+        request = Request(
+            search_url,
+            headers={
+                'User-Agent': (
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/124.0.0.0 Safari/537.36'
+                )
+            },
+        )
+        with urlopen(request, timeout=8) as response:
+            html = response.read(65000).decode('utf-8', errors='ignore')
+    except (URLError, TimeoutError, ValueError):
+        return (discovered_url or '', contact_email or '')
+
+    hrefs = re.findall(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>', html, flags=re.IGNORECASE)
+    candidates: list[str] = []
+    for raw in hrefs:
+        candidate = _extract_search_result_url(raw)
+        if not candidate:
+            continue
+        parsed = urlparse(candidate)
+        host = parsed.netloc.lower()
+        if host.startswith('www.'):
+            host = host[4:]
+        if not host or host in SEARCH_BLOCKED_HOSTS:
+            continue
+        candidates.append(f'https://{host}')
+
+    # Deduplicate preserving order
+    seen = set()
+    cleaned_candidates = []
+    for c in candidates:
+        h = _canonicalize_url_host(c)
+        if h in seen:
+            continue
+        seen.add(h)
+        cleaned_candidates.append(c)
+
+    for candidate_url in cleaned_candidates[:8]:
+        try:
+            if not _is_reachable_official_url(candidate_url):
+                continue
+            email = _extract_official_email(candidate_url, entity_name)
+            if email:
+                return (candidate_url, email)
+        except Exception:
+            continue
+
+    return (discovered_url or '', contact_email or '')
+
+
 def _generate_fake_domain(official_domain: str) -> str:
     """
     Transform official domain to a similar but fake one using TLD variations.
@@ -649,7 +728,7 @@ def _build_training_link(
 
     labels = host.split('.')
     official_root = '.'.join(labels[-2:]) if len(labels) >= 2 else host
-    entity_slug = re.sub(r'[^a-z0-9]+', '-', entity_name.lower()).strip('-') or 'entidad'
+    entity_slug = _slugify_ascii(entity_name, fallback='entidad')
     path_hint = parsed.path.strip('/') or 'ingreso'
     scenario_id = abs(hash(f'{entity_slug}:{official_root}:{path_hint}')) % 100000
     route_segment = _infer_link_route_segment(articulo_base)
@@ -726,9 +805,17 @@ def _ensure_detailed_simulation(simulacion: str, detail_block: str) -> str:
 
 
 def _sanitize_simulation_text(simulacion: str, enlace_senuelo: str) -> str:
+    # Convert escaped control sequences into readable text.
+    cleaned = simulacion.replace('\\r\\n', '\n').replace('\\n', '\n').replace('\\t', ' ')
+
+    # Remove markdown links so the message body looks like a real email/text.
+    cleaned = re.sub(r'\[([^\]]{1,200})\]\(([^)]+)\)', r'\1: \2', cleaned)
+
     # Keep only one sender section in UI header by removing duplicated lines inside body.
-    cleaned = re.sub(r'(?im)^\s*remitente\s*:\s*.*$', '', simulacion)
+    cleaned = re.sub(r'(?im)^\s*remitente\s*:\s*.*$', '', cleaned)
     cleaned = re.sub(r'(?im)^\s*de\s*:\s*.*$', '', cleaned)
+    cleaned = re.sub(r'(?im)^\s*para\s*:\s*.*$', '', cleaned)
+    cleaned = re.sub(r'(?im)^\s*to\s*:\s*.*$', '', cleaned)
     cleaned = re.sub(r'(?im)^\s*asunto\s*:\s*.*$', '', cleaned)
     cleaned = re.sub(r'(?im)^\s*adjuntos?\s*:\s*.*$', '', cleaned)
     cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
@@ -766,6 +853,7 @@ def generar_simulacion_y_feedback(
     articulos_recientes: list[dict[str, Any]],
     articulo_base: dict[str, Any] | None = None,
     respuesta_usuario: str = '',
+    recipient_email: str | None = None,
     force_es_phishing: bool | None = None,
 ) -> dict[str, Any]:
     resolved_api_key = openai_api_key or os.getenv('OPENAI_API_KEY', '')
@@ -821,6 +909,14 @@ def generar_simulacion_y_feedback(
     target_host = urlparse(entidad_url).netloc.lower().removeprefix('www.')
     entidad_signature = _fetch_page_signature(entidad_url)
     entidad_correo_oficial = _extract_official_email(entidad_url, entidad_nombre)
+    # If we couldn't find an official URL or email, try a web search to discover them
+    if (not entidad_url or not entidad_correo_oficial):
+        discovered_url, discovered_email = _discover_official_contact_from_web(entidad_nombre, entidad_url)
+        if discovered_url and not entidad_url:
+            entidad_url = discovered_url
+            target_host = urlparse(entidad_url).netloc.lower().removeprefix('www.')
+        if discovered_email and not entidad_correo_oficial:
+            entidad_correo_oficial = discovered_email
     vuln_details = _extract_vulnerability_details(articulo_base)
     vuln_detail_block = _build_vulnerability_detail_block(vuln_details)
     # Generate with fake domain by default (assuming phishing); will replace if LLM returns es_phishing=false
@@ -858,7 +954,8 @@ def generar_simulacion_y_feedback(
         'Debes imitar la entidad objetivo detectada en el articulo. '
         'Obligatorio en la simulacion: incluir remitente (correo) o numero falso paraguayo (+595...), '
         'tono y estilo similar a la entidad objetivo, y un enlace NO clickeable que use EXCLUSIVAMENTE el enlace senialado como enlace_senuelo. '
-        'Busca que las urls tengan homoglyps en phishing (razon: educativa). No inventes paginas ni pidas datos bancarios reales. Usa tipo_mensaje para indicar el formato de la simulacion.'
+        'Busca que las urls tengan homoglyps en phishing (razon: educativa). No inventes paginas ni pidas datos bancarios reales. Usa tipo_mensaje para indicar el formato de la simulacion. '
+        'No uses formato Markdown en la simulacion (sin [texto](url)), no incluyas secuencias literales como \\n y redacta en espanol natural, evitando plantillas genericas.'
     )
 
     # Seleccionar entidad aleatoria para adjuntos/HTML SOLO si:
@@ -875,7 +972,7 @@ def generar_simulacion_y_feedback(
     ]).lower()
     
     has_attachment_keywords = any(keyword in context_text_lower for keyword in {
-        'adjunto', 'archivo', 'documento', 'pdf', 'excel', 'excel', 'word', 'imagen',
+        'adjunto', 'archivo', 'documento', 'pdf', 'excel', 'word', 'imagen',
         'descarga', 'descargar', 'html', 'página web', 'sitio web', 'formulario',
     })
     
@@ -941,6 +1038,7 @@ def generar_simulacion_y_feedback(
         'si es correo, genera correo; solo cambia si el articulo no aporta suficiente contexto del canal. '
         'Si es sms o whatsapp, agrega numero falso de Paraguay (+595...). '
         'Incluye el enlace_senuelo exactamente como fue proveido, sin reemplazar esquema ni dominio. '
+        'No uses enlaces en Markdown tipo [texto](url) y no uses secuencias escapadas literales como \\n en la simulacion. '
         'Incluye resumen_justificacion explicando en 1-2 oraciones por que la simulacion se construyo en base al articulo base.'
     )
 
@@ -1043,7 +1141,7 @@ def generar_simulacion_y_feedback(
         suffix = vuln_details.get('product') or entidad_nombre
         subject = f'{subject_templates[template_idx]} - {suffix[:30]}'
 
-    return {
+    result = {
         'simulacion': simulacion,
         'tipo_mensaje': tipo_mensaje,
         'sender_email': sender_email,
@@ -1057,3 +1155,82 @@ def generar_simulacion_y_feedback(
         'resultado': resultado,
         'resumen_justificacion': resumen_justificacion,
     }
+
+    def _is_valid_alignment(res: dict[str, Any]) -> bool:
+        sender = str(res.get('sender_email', '')).lower()
+        enlace = str(res.get('enlace_senuelo', '')).strip()
+        if not sender or '@' not in sender:
+            return False
+        sender_domain = sender.split('@', 1)[1].lower()
+        enlace_host = _canonicalize_url_host(enlace)
+
+        # For non-phishing: sender must match official target host or official email domain
+        if not _coerce_bool(res.get('es_phishing', 'true') == 'true', default=True):
+            if entidad_correo_oficial:
+                correo_dom = entidad_correo_oficial.split('@')[-1].lower() if '@' in entidad_correo_oficial else entidad_correo_oficial
+                if sender_domain == correo_dom:
+                    return enlace_host == target_host or enlace_host == _canonicalize_url_host(entidad_url)
+            return sender_domain == target_host and enlace_host == target_host
+
+        # For phishing: sender domain should be a realistic variation of target host
+        fake_candidate = _generate_fake_domain(target_host).replace('www.', '')
+        applied_tld = _apply_tld_variation_email(target_host).replace('www.', '')
+        if sender_domain in {fake_candidate, applied_tld} or target_host in sender_domain:
+            enlace_host_s = enlace_host.replace('www.', '')
+            if fake_candidate.replace('.','') in enlace_host_s.replace('.','') or applied_tld.replace('.','') in enlace_host_s.replace('.',''):
+                return True
+        return False
+
+    # If validation fails, attempt up to 2 corrective regenerations
+    max_attempts = 2
+    attempts = 0
+    if not _is_valid_alignment(result):
+        while attempts < max_attempts:
+            attempts += 1
+            desired_sender_domain = _generate_fake_domain(target_host) if es_phishing else target_host
+            desired_sender = f'seguridad@{desired_sender_domain}' if es_phishing else (entidad_correo_oficial or f'info@{target_host}')
+            desired_enlace = _build_training_link(entidad_url, entidad_nombre, articulo_base, use_fake_domain=es_phishing is True)
+
+            correction_user = (
+                'Corrige SOLO los campos `sender_email` y `enlace_senuelo` en el JSON devuelto previamente. '
+                f'Los nuevos valores deben ser EXACTAMENTE: sender_email={desired_sender} y enlace_senuelo={desired_enlace}. '
+                'Devuelve SOLO el JSON completo con el mismo esquema que antes, sin texto adicional.'
+            )
+
+            try:
+                correction_resp = client.chat.completions.create(
+                    model=resolved_model,
+                    response_format={'type': 'json_object'},
+                    messages=[
+                        {'role': 'system', 'content': system_prompt},
+                        {'role': 'user', 'content': user_prompt + '\n\n' + correction_user},
+                    ],
+                    temperature=0.0,
+                )
+                corr_content = correction_resp.choices[0].message.content or '{}'
+                try:
+                    corr_parsed = json.loads(corr_content)
+                except json.JSONDecodeError:
+                    continue
+
+                corr_sender = str(corr_parsed.get('sender_email', '')).strip().lower()
+                corr_enlace = str(corr_parsed.get('enlace_senuelo', '')).strip()
+                if corr_sender:
+                    result['sender_email'] = corr_sender
+                if corr_enlace:
+                    result['enlace_senuelo'] = corr_enlace
+
+                result['simulacion'] = _sanitize_simulation_text(result.get('simulacion', ''), result['enlace_senuelo'])
+
+                if _is_valid_alignment(result):
+                    break
+            except Exception:
+                continue
+
+    # Ensure the returned payload includes the recipient email for the UI header
+    result['recipient_email'] = (recipient_email or '').strip().lower()
+
+    # Final safety: remove any accidental 'Para:' lines from the simulation body
+    result['simulacion'] = _sanitize_simulation_text(result.get('simulacion', ''), result.get('enlace_senuelo', ''))
+
+    return result

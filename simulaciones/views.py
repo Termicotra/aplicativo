@@ -108,6 +108,7 @@ class GenerarSimulacionAPIView(APIView):
                 articulo_base=articulo_base,
                 articulos_recientes=articulos_recientes,
                 respuesta_usuario=data.get('respuesta_usuario', ''),
+                recipient_email=usuario.email if usuario and getattr(usuario, 'email', None) else None,
             )
         except AIServiceError as exc:
             return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
@@ -267,6 +268,7 @@ class OpuestoSimulacion(APIView):
                 articulo_base=articulo_base,
                 articulos_recientes=articulos_recientes,
                 force_es_phishing=es_phishing_opuesto,
+                recipient_email=simulacion_vieja.usuario.email if getattr(simulacion_vieja, 'usuario', None) and getattr(simulacion_vieja.usuario, 'email', None) else None,
             )
         except AIServiceError as exc:
             return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
