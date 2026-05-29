@@ -215,6 +215,7 @@ def simulaciones_section_view(request):
                 'esperado': 'phishing' if ia_output.get('es_phishing', 'true') == 'true' else 'no-phishing',
                 'tipo_mensaje': ia_output.get('tipo_mensaje', 'correo'),
                 'sender_email': ia_output.get('sender_email', ''),
+                'recipient_email': request.user.email if request.user and getattr(request.user, 'email', None) else '',
                 'subject': ia_output.get('subject', ''),
                 'attachments': ia_output.get('attachments', []),
                 'entidad_objetivo': ia_output.get('entidad_objetivo', 'Entidad objetivo'),
@@ -258,6 +259,7 @@ def simulaciones_section_view(request):
         'sender': '',
         'subject': 'Notificacion de seguridad y verificacion',
         'attachments': [],
+        'recipient_email': getattr(request.user, 'email', '') or '',
         'body': current_simulacion.simulacion_texto if current_simulacion else '',
     }
 
@@ -272,9 +274,11 @@ def simulaciones_section_view(request):
         session_sender = str(current_state.get('sender_email', '')).strip()
         session_subject = str(current_state.get('subject', '')).strip()
         session_attachments = current_state.get('attachments', [])
+        session_recipient = str(current_state.get('recipient_email', '')).strip() or getattr(request.user, 'email', '')
 
         mensaje_render['sender'] = session_sender or parsed['sender'] or f'soporte.seguridad@{message_domain}'
         mensaje_render['subject'] = session_subject or parsed['subject'] or 'Notificacion de seguridad y verificacion'
+        mensaje_render['recipient_email'] = session_recipient or getattr(request.user, 'email', '') or ''
         if isinstance(session_attachments, list) and session_attachments:
             mensaje_render['attachments'] = [str(item).strip() for item in session_attachments if str(item).strip()]
         else:

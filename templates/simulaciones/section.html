@@ -342,7 +342,7 @@ function mostrarSimulacion(sim) {
                     <strong>De:</strong>
                     <span>${escapeHTML(sim.sender_email)}</span>
                     <strong>Para:</strong>
-                    <span>tu@correo.com</span>
+                    <span>${escapeHTML(sim.recipient_email || '')}</span>
                     <strong>Asunto:</strong>
                     <span>${escapeHTML(sim.subject)}</span>
                     <strong>Adjuntos:</strong>

@@ -176,6 +176,7 @@ class ObtenerSimulacionAleatoria(APIView):
                 'es_phishing': simulacion.es_phishing,
                 'tipo_mensaje': simulacion.tipo_mensaje,
                 'sender_email': simulacion.sender_email,
+                'recipient_email': request.user.email if request.user.is_authenticated and getattr(request.user, 'email', None) else '',
                 'subject': simulacion.subject,
                 'attachments': simulacion.attachments,
                 'enlace_senuelo': simulacion.enlace_senuelo,
