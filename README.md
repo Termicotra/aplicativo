@@ -5,7 +5,7 @@ Breve: proyecto Django para generar simulaciones de phishing y capacitaciones ba
 ## Requisitos
 - Python 3.10+
 - Git
-- PostgreSQL (opcional, por defecto usa SQLite)
+- PostgreSQL (requerido por la configuración actual del proyecto)
 
 ## Instalación rápida (desarrollo)
 1. Clona el repositorio y sitúate en la carpeta del proyecto.
@@ -36,7 +36,11 @@ Create a `.env` file or export these env vars in tu entorno:
 
 - `DJANGO_SECRET_KEY` — clave secreta de Django
 - `DEBUG` — `True` (desarrollo) o `False` (producción)
-- `DATABASE_URL` — URL de conexión si usas PostgreSQL (opcional)
+- `POSTGRES_DB` — nombre de la base de datos
+- `POSTGRES_USER` — usuario de PostgreSQL
+- `POSTGRES_PASSWORD` — contraseña de PostgreSQL
+- `POSTGRES_HOST` — host de PostgreSQL
+- `POSTGRES_PORT` — puerto de PostgreSQL
 - `OPENAI_API_KEY` — clave para la integración con el servicio de IA
 - `OPENAI_MODEL` — modelo por defecto (ej: `gpt-4o`)
 
@@ -65,8 +69,9 @@ python manage.py runserver
 ```
 
 ## Base de datos
-- Por defecto el proyecto está configurado para SQLite (desarrollo).
-- Para producción: usar PostgreSQL y ajustar `DATABASE_URL`. Se incluye un script SQL de creación en `sql/create_all_tables_postgres.sql`.
+- El proyecto está configurado para PostgreSQL en `treck/settings.py`.
+- Las credenciales se leen desde las variables `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST` y `POSTGRES_PORT`.
+- Se incluye un script SQL de creación en `sql/create_all_tables_postgres.sql`.
 
 ## Actualización de artículos
 - Hay un script para actualizar/recopilar artículos: `update_articles.py`.
