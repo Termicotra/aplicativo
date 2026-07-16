@@ -54,3 +54,32 @@ class Simulacion(models.Model):
     def __str__(self):
         tipo = 'Phishing' if self.es_phishing else 'Legítimo'
         return f'{self.articulo.titulo[:30]} - {tipo}'
+
+
+class AIInteraction(models.Model):
+    """Registra los prompts enviados a la API de IA y sus respuestas."""
+    # Identificador único secuencial para auditoría externa
+    # Se rellenará por migración y en producción se configurará con una secuencia DB.
+    id_iainteraction = models.BigIntegerField(unique=True, editable=False)
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='ai_interactions',
+        null=True,
+        blank=True,
+    )
+    prompt = models.TextField()
+    prompt_metadata = models.JSONField(default=dict, blank=True)
+    response = models.TextField()
+    response_metadata = models.JSONField(default=dict, blank=True)
+    model_name = models.CharField(max_length=100, default='', blank=True)
+    success = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'ai_interaction'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'AIInteraction {self.id} - {self.model_name}'

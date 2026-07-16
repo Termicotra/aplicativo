@@ -825,6 +825,79 @@ def _discover_official_contact_from_web(entity_name: str, fallback_url: str) -> 
     return (discovered_url or '', contact_email or '')
 
 
+def _record_ai_interaction(
+    prompt_text: str,
+    prompt_metadata: dict | None,
+    response_text: str,
+    response_metadata: dict | None,
+    model_name: str = '',
+    usuario=None,
+) -> None:
+    """Registrar la interacción en la tabla AIInteraction evitando duplicados.
+
+    Silencioso en errores para no interrumpir la generación.
+    """
+    try:
+        from .models import AIInteraction
+        from django.db import connection
+        from django.db.models import Max
+        print('Recording AIInteraction: model=', model_name, 'prompt_len=', len(prompt_text or ''))
+        prompt_metadata = prompt_metadata or {}
+        response_metadata = response_metadata or {}
+
+        qs = AIInteraction.objects.filter(
+            prompt=prompt_text,
+            response=response_text,
+            model_name=model_name or '',
+        )
+        if usuario:
+            qs = qs.filter(usuario=usuario)
+        else:
+            qs = qs.filter(usuario__isnull=True)
+
+        if qs.exists():
+            print('Existing AIInteraction found, skipping create')
+            return None
+        # Ensure id_iainteraction is assigned to avoid NOT NULL constraint errors.
+        next_id = None
+        try:
+            if connection.vendor == 'postgresql':
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT nextval('ai_interaction_id_iainteraction_seq')")
+                    row = cursor.fetchone()
+                    if row:
+                        next_id = int(row[0])
+            else:
+                agg = AIInteraction.objects.aggregate(max_id=Max('id_iainteraction'))
+                max_id = agg.get('max_id') or 0
+                next_id = int(max_id) + 1
+        except Exception:
+            next_id = None
+
+        create_kwargs = dict(
+            usuario=usuario,
+            prompt=prompt_text,
+            prompt_metadata=prompt_metadata,
+            response=response_text,
+            response_metadata=response_metadata,
+            model_name=model_name or '',
+            success=True,
+        )
+        if next_id is not None:
+            create_kwargs['id_iainteraction'] = next_id
+
+        created = AIInteraction.objects.create(**create_kwargs)
+        print('Created AIInteraction id=', created.pk, 'id_iainteraction=', getattr(created, 'id_iainteraction', None))
+    except Exception as exc:
+        try:
+            import traceback
+            print('AIInteraction record failed:', exc)
+            traceback.print_exc()
+        except Exception:
+            pass
+        return None
+
+
 def _generate_fake_domain(official_domain: str) -> str:
     """
     Transform official domain to a similar but fake one using variations.
@@ -1463,6 +1536,9 @@ def generar_simulacion_y_feedback(
         enlace = str(res.get('enlace_senuelo', '')).strip()
         if not sender or '@' not in sender:
             return False
+
+
+        
         sender_domain = sender.split('@', 1)[1].lower()
         enlace_host = _canonicalize_url_host(enlace)
 
@@ -1534,5 +1610,30 @@ def generar_simulacion_y_feedback(
 
     # Final safety: remove any accidental 'Para:' lines from the simulation body
     result['simulacion'] = _sanitize_simulation_text(result.get('simulacion', ''), result.get('enlace_senuelo', ''))
+
+    # Registrar interacción en la base de datos si es posible, evitando duplicados.
+    try:
+        prompt_full = system_prompt + "\n\n" + user_prompt
+        response_raw = content
+        prompt_meta = {
+            'articulo': articulo_base.get('id') if isinstance(articulo_base, dict) else None,
+            'entidad_objetivo': entidad_nombre,
+            'articulo_category': articulo_category,
+        }
+        response_meta = {
+            'parsed': parsed,
+            'attempts': attempts,
+            'model': resolved_model,
+        }
+        _record_ai_interaction(
+            prompt_text=prompt_full,
+            prompt_metadata=prompt_meta,
+            response_text=response_raw,
+            response_metadata=response_meta,
+            model_name=resolved_model,
+            usuario=None,
+        )
+    except Exception:
+        pass
 
     return result
