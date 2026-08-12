@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,9 +12,18 @@ from .serializers import (
 )
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Capacitaciones'], summary='Listar ejercicios', description='Obtiene los ejercicios de capacitación disponibles para evaluar la detección de phishing.'),
+    retrieve=extend_schema(tags=['Capacitaciones'], summary='Obtener ejercicio', description='Devuelve el detalle de un ejercicio específico.'),
+    create=extend_schema(tags=['Capacitaciones'], summary='Crear ejercicio', description='Registra un nuevo ejercicio de entrenamiento.'),
+    update=extend_schema(tags=['Capacitaciones'], summary='Actualizar ejercicio', description='Actualiza todos los datos de un ejercicio existente.'),
+    partial_update=extend_schema(tags=['Capacitaciones'], summary='Actualizar ejercicio parcialmente', description='Modifica solo los campos enviados de un ejercicio existente.'),
+    destroy=extend_schema(tags=['Capacitaciones'], summary='Eliminar ejercicio', description='Elimina un ejercicio de la plataforma.'),
+)
 class EjercicioViewSet(viewsets.ModelViewSet):
     queryset = Ejercicio.objects.prefetch_related('opciones').all()
     serializer_class = EjercicioSerializer
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -25,13 +35,30 @@ class EjercicioViewSet(viewsets.ModelViewSet):
         return queryset.filter(activo=activo.lower() == 'true')
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Capacitaciones'], summary='Listar opciones de ejercicio', description='Devuelve todas las opciones asociadas a los ejercicios de entrenamiento.'),
+    retrieve=extend_schema(tags=['Capacitaciones'], summary='Obtener opción', description='Devuelve una opción de ejercicio específica.'),
+    create=extend_schema(tags=['Capacitaciones'], summary='Crear opción', description='Registra una nueva opción para un ejercicio.'),
+    update=extend_schema(tags=['Capacitaciones'], summary='Actualizar opción', description='Actualiza todos los datos de una opción de ejercicio.'),
+    partial_update=extend_schema(tags=['Capacitaciones'], summary='Actualizar opción parcialmente', description='Modifica solo los campos enviados de una opción de ejercicio.'),
+    destroy=extend_schema(tags=['Capacitaciones'], summary='Eliminar opción', description='Elimina una opción de ejercicio del sistema.'),
+)
 class OpcionEjercicioViewSet(viewsets.ModelViewSet):
     queryset = OpcionEjercicio.objects.select_related('ejercicio').all()
     serializer_class = OpcionEjercicioSerializer
+    permission_classes = [permissions.AllowAny]
 
 
+@extend_schema(
+    tags=['Capacitaciones'],
+    summary='Responder ejercicio',
+    description='Evalúa la elección del usuario y devuelve retroalimentación educativa contextualizada para reforzar el aprendizaje.',
+    request=ResponderEjercicioSerializer,
+    responses={200: None},
+)
 class ResponderEjercicioAPIView(APIView):
     permission_classes = [permissions.AllowAny]
+    serializer_class = ResponderEjercicioSerializer
 
     def post(self, request):
         serializer = ResponderEjercicioSerializer(data=request.data)

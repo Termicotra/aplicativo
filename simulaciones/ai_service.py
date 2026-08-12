@@ -1299,7 +1299,8 @@ def generar_simulacion_y_feedback(
         '   - Entidades gubernamentales SIEMPRE usan .gov.py (ej: pj.gov.py, set.gov.py)\n'
         '   - NUNCA cambies arbitrariamente el tipo de dominio\n'
         '3. REALISMO VISUAL: El enlace_senuelo ya está formateado. Usalo TAL COMO ESTÁ sin modificaciones.\n'
-        '4. CONTEXTO DEL CANAL: Adapta el tono y formato al canal:\n'
+        '4. REGLA ESTRICTA DE ADJUNTOS: Si es_phishing=false, NUNCA adjuntes archivos, PDFs, documentos ni enlaces de descarga. attachments debe ser una lista vacía [].\n'
+        '5. CONTEXTO DEL CANAL: Adapta el tono y formato al canal:\n'
         '   - SMS/WhatsApp: Breve, urgencia, típicamente un link\n'
         '   - Correo: Más formal, con estructura clara De/Asunto/Cuerpo\n'
         '   - Sitio web: Texto que aparecería en una página fraudulenta\n'
@@ -1395,6 +1396,7 @@ def generar_simulacion_y_feedback(
         f'   - Crea un mensaje OFICIAL/LEGÍTIMO de la entidad real\n'
         f'   - Usa dominio oficial y correo oficial (si está disponible)\n'
         f'   - Usa enlace_senuelo TAL COMO ESTÁ (será solo el dominio oficial)\n'
+        f'   - NUNCA agregues adjuntos, PDFs, formularios ni archivos descargables; attachments debe quedar como []\n'
         f'   - Incluye información educativa sobre cómo protegerse\n'
         f'   - Tono profesional y formal de la entidad\n'
         f'   - Este tipo educación sobre comunicación legítima vs fraudulenta\n'
@@ -1462,6 +1464,9 @@ def generar_simulacion_y_feedback(
     if resultado not in {'correcto', 'incorrecto'}:
         resultado = 'incorrecto'
 
+    if not es_phishing:
+        attachments = []
+
     if not simulacion:
         raise AIServiceError('La IA no devolvio el texto de simulacion.')
 
@@ -1515,6 +1520,9 @@ def generar_simulacion_y_feedback(
         template_idx = abs(hash(entidad_nombre)) % len(subject_templates)
         suffix = vuln_details.get('product') or entidad_nombre
         subject = f'{subject_templates[template_idx]} - {suffix[:30]}'
+
+    if not es_phishing:
+        attachments = []
 
     result = {
         'simulacion': simulacion,
@@ -1604,6 +1612,9 @@ def generar_simulacion_y_feedback(
                     break
             except Exception:
                 continue
+
+    if not _coerce_bool(result.get('es_phishing', 'true') == 'true', default=True):
+        result['attachments'] = []
 
     # Ensure the returned payload includes the recipient email for the UI header
     result['recipient_email'] = (recipient_email or '').strip().lower()

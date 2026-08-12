@@ -15,13 +15,24 @@ class SimulacionSerializer(serializers.ModelSerializer):
             'articulo',
             'articulo_titulo',
             'articulo_url',
+            'es_phishing',
             'simulacion_texto',
+            'tipo_mensaje',
+            'sender_email',
+            'subject',
+            'attachments',
+            'enlace_senuelo',
+            'entidad_objetivo',
+            'dominio_objetivo',
             'resumen_justificacion',
             'resultado',
             'feedback',
-            'fecha',
+            'tipo_generacion',
+            'fecha_creacion',
+            'fecha_respuesta',
+            'es_mostrada',
         ]
-        read_only_fields = ['fecha']
+        read_only_fields = ['fecha_creacion', 'fecha_respuesta']
 
 
 class GenerarSimulacionRequestSerializer(serializers.Serializer):

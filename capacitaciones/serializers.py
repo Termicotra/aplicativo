@@ -6,7 +6,7 @@ from .models import Ejercicio, OpcionEjercicio
 class OpcionEjercicioSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpcionEjercicio
-        fields = ['id', 'ejercicio', 'texto', 'orden', 'es_correcta', 'retroalimentacion_opcion']
+        fields = ['id', 'ejercicio', 'texto', 'es_correcta', 'retroalimentacion_opcion', 'orden']
 
 
 class OpcionEjercicioPublicSerializer(serializers.ModelSerializer):
@@ -28,11 +28,11 @@ class EjercicioSerializer(serializers.ModelSerializer):
             'ejemplo',
             'retroalimentacion',
             'activo',
-            'opciones',
             'fecha_creacion',
             'fecha_actualizacion',
+            'opciones',
         ]
-        read_only_fields = ['fecha_creacion', 'fecha_actualizacion']
+        read_only_fields = ['fecha_creacion', 'fecha_actualizacion', 'opciones']
 
 
 class ResponderEjercicioSerializer(serializers.Serializer):

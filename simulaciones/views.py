@@ -1,6 +1,7 @@
 ﻿from django.contrib.auth import get_user_model
 from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,13 +15,30 @@ from .serializers import GenerarSimulacionRequestSerializer, SimulacionSerialize
 User = get_user_model()
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Simulaciones'], summary='Listar simulaciones', description='Consulta todas las simulaciones generadas y asociadas a usuarios y artículos.'),
+    retrieve=extend_schema(tags=['Simulaciones'], summary='Obtener simulación', description='Devuelve el detalle completo de una simulación específica.'),
+    create=extend_schema(tags=['Simulaciones'], summary='Crear simulación', description='Crea una nueva simulación de phishing o legítima.'),
+    update=extend_schema(tags=['Simulaciones'], summary='Actualizar simulación', description='Actualiza todos los campos de una simulación existente.'),
+    partial_update=extend_schema(tags=['Simulaciones'], summary='Actualizar simulación parcialmente', description='Modifica solo los campos enviados de una simulación existente.'),
+    destroy=extend_schema(tags=['Simulaciones'], summary='Eliminar simulación', description='Elimina una simulación del sistema.'),
+)
 class SimulacionViewSet(viewsets.ModelViewSet):
     queryset = Simulacion.objects.select_related('usuario', 'articulo').all()
     serializer_class = SimulacionSerializer
+    permission_classes = [permissions.AllowAny]
 
 
+@extend_schema(
+    tags=['Simulaciones'],
+    summary='Generar simulación con IA',
+    description='Genera una simulación de phishing o legítima usando información contextual de artículos recientes y feedback educativo.',
+    request=GenerarSimulacionRequestSerializer,
+    responses={201: None},
+)
 class GenerarSimulacionAPIView(APIView):
     permission_classes = [permissions.AllowAny]
+    serializer_class = GenerarSimulacionRequestSerializer
 
     def post(self, request):
         serializer = GenerarSimulacionRequestSerializer(data=request.data)
@@ -148,11 +166,18 @@ class GenerarSimulacionAPIView(APIView):
         )
 
 
+@extend_schema(
+    tags=['Simulaciones'],
+    summary='Obtener simulación aleatoria',
+    description='Devuelve una simulación aleatoria para que el usuario la evalúe como phishing o legítima.',
+    responses={200: SimulacionSerializer},
+)
 class ObtenerSimulacionAleatoria(APIView):
     """
     Obtiene una simulación aleatoria (phishing o legítima) para mostrar al usuario.
     """
     permission_classes = [permissions.AllowAny]
+    serializer_class = SimulacionSerializer
 
     def get(self, request):
         # Obtener una simulación aleatoria
@@ -187,12 +212,20 @@ class ObtenerSimulacionAleatoria(APIView):
         )
 
 
+@extend_schema(
+    tags=['Simulaciones'],
+    summary='Obtener simulación opuesta',
+    description='Recupera la versión contraria de una simulación del mismo artículo para comparar escenarios phishing y legítimos.',
+    request=None,
+    responses={200: None},
+)
 class OpuestoSimulacion(APIView):
     """
     Devuelve la simulacion opuesta ya existente para el mismo articulo
     (phishing <-> legitimo). Si no existe, la genera como respaldo.
     """
     permission_classes = [permissions.AllowAny]
+    serializer_class = SimulacionSerializer
 
     def post(self, request):
         simulacion_id = request.data.get('simulacion_id')
@@ -314,11 +347,18 @@ class OpuestoSimulacion(APIView):
         )
 
 
+@extend_schema(
+    tags=['Simulaciones'],
+    summary='Registrar respuesta del usuario',
+    description='Recibe la decisión del usuario sobre una simulación y devuelve si acertó o falló junto con la retroalimentación.',
+    responses={200: None},
+)
 class RegistrarRespuestaSimulacion(APIView):
     """
     Registra la respuesta del usuario (phishing o no-phishing) y evalúa si fue correcta.
     """
     permission_classes = [permissions.AllowAny]
+    serializer_class = SimulacionSerializer
 
     def post(self, request):
         simulacion_id = request.data.get('simulacion_id')
