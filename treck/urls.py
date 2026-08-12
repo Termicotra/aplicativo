@@ -42,5 +42,6 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/simulaciones/', include('simulaciones.urls')),
     path('api/articulos/', include('articulos.urls')),
+    path('api/evaluaciones/', include('evaluaciones.urls')),
     path('api/capacitaciones/', include('capacitaciones.urls')),
 ]

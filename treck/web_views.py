@@ -7,7 +7,7 @@ from django.db.models import Count, Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from articulos.models import Articulo
-from capacitaciones.models import Ejercicio, OpcionEjercicio, RespuestaEjercicio
+from evaluaciones.models import Ejercicio, OpcionEjercicio, RespuestaEjercicio
 from simulaciones.ai_service import AIServiceError, generar_simulacion_y_feedback
 from simulaciones.models import Simulacion
 from .forms import UserRegisterForm

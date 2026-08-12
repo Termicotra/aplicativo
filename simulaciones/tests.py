@@ -7,8 +7,8 @@ from django.test import TestCase
 
 from articulos.models import Articulo
 from articulos.serializers import ArticuloSerializer
-from capacitaciones.models import Ejercicio, OpcionEjercicio
-from capacitaciones.serializers import EjercicioSerializer, OpcionEjercicioSerializer
+from evaluaciones.models import Ejercicio, OpcionEjercicio
+from evaluaciones.serializers import EjercicioSerializer, OpcionEjercicioSerializer
 from simulaciones.ai_service import generar_simulacion_y_feedback
 from simulaciones.models import Simulacion
 from simulaciones.serializers import SimulacionSerializer

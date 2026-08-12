@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'simulaciones',
     'articulos',
+    'evaluaciones',
     'capacitaciones',
 ]
 
@@ -174,7 +175,7 @@ SIMPLE_JWT = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Treck API',
-    'DESCRIPTION': 'API para autenticación, simulaciones, artículos y capacitaciones de phishing.',
+    'DESCRIPTION': 'API para autenticación, simulaciones, artículos y evaluaciones de phishing.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
