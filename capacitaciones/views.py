@@ -21,6 +21,11 @@ class LeccionViewSet(viewsets.ReadOnlyModelViewSet):
             return LeccionDetailSerializer
         return LeccionListSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
     def get_queryset(self):
         return Leccion.objects.filter(activa=True).order_by('orden')
 
