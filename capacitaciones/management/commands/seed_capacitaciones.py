@@ -1,5 +1,5 @@
 ﻿from django.core.management.base import BaseCommand
-from django.db import transaction
+from django.db import transaction, connection
 
 from capacitaciones.models import Leccion, SeccionLeccion, ItemListaSeccion
 
@@ -187,6 +187,12 @@ class Command(BaseCommand):
             SeccionLeccion.objects.all().delete()
             Leccion.objects.all().delete()
             self.stdout.write(self.style.WARNING('Se eliminaron lecciones previas.'))
+
+            with connection.cursor() as cursor:
+                cursor.execute("ALTER SEQUENCE item_lista_seccion_id_seq RESTART WITH 1;")
+                cursor.execute("ALTER SEQUENCE seccion_leccion_id_seq RESTART WITH 1;")
+                cursor.execute("ALTER SEQUENCE leccion_capacitacion_id_seq RESTART WITH 1;")
+            self.stdout.write(self.style.WARNING('Se reiniciaron las secuencias de IDs.'))
 
         creadas = 0
         actualizadas = 0
