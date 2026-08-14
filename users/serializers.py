@@ -80,3 +80,16 @@ class AuthUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email']
+
+
+class ProgressSerializer(serializers.Serializer):
+    total_lessons = serializers.IntegerField()
+    completed_lessons = serializers.IntegerField()
+    total_simulations = serializers.IntegerField()
+    completed_simulations = serializers.IntegerField()
+    total_quizzes = serializers.IntegerField()
+    completed_quizzes = serializers.IntegerField()
+    average_score = serializers.FloatField()
+    streak = serializers.IntegerField()
+    last_activity = serializers.CharField()
+    total_time_spent = serializers.CharField()

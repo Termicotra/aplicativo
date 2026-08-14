@@ -77,6 +77,30 @@ SEED_EJERCICIOS = [
             },
         ],
     },
+    {
+        'tema': 'Seguridad en Codigos QR',
+        'pregunta': 'Cual es el riesgo mas relevante al escanear codigos QR en espacios publicos?',
+        'concepto': 'Los codigos QR pueden contener URLs maliciosas, malware o llevar a sitios de phishing. Su facilidad de escaneo y el desconocimiento de destino hacen que sean vectores de ataque.',
+        'ejemplo': 'Un codigo QR pegado sobre un cartel publicitario original redirige a un sitio falso que captura credenciales.',
+        'retroalimentacion': 'Antes de escanear, verifica visualmente que el codigo se vea integro y considera usar un app que muestre la URL antes de abrir.',
+        'opciones': [
+            {
+                'texto': 'Los codigos QR siempre son seguros porque estan cifrados en la camara del telefono.',
+                'es_correcta': False,
+                'retroalimentacion_opcion': 'Incorrecto. Los QR no estan cifrados; el riesgo es el contenido o destino del enlace.',
+            },
+            {
+                'texto': 'Pueden dirigir a URLs maliciosas o sitios de phishing sin que el usuario vea el destino real.',
+                'es_correcta': True,
+                'retroalimentacion_opcion': 'Correcto. El riesgo principal es que la URL esta oculta hasta escanear, permitiendo engano.',
+            },
+            {
+                'texto': 'El riesgo es minimo si se escanea desde una red WiFi publica confiable.',
+                'es_correcta': False,
+                'retroalimentacion_opcion': 'Incorrecto. La red no afecta si el codigo apunta a un sitio malicioso.',
+            },
+        ],
+    },
 ]
 
 
