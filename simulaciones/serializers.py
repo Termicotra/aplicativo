@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Simulacion
+from .models import Simulacion, RespuestaSimulacion
 
 
 class SimulacionSerializer(serializers.ModelSerializer):
@@ -33,6 +33,23 @@ class SimulacionSerializer(serializers.ModelSerializer):
             'es_mostrada',
         ]
         read_only_fields = ['fecha_creacion', 'fecha_respuesta']
+
+
+class RespuestaSimulacionSerializer(serializers.ModelSerializer):
+    simulacion_titulo = serializers.CharField(source='simulacion.articulo.titulo', read_only=True)
+
+    class Meta:
+        model = RespuestaSimulacion
+        fields = [
+            'id',
+            'usuario',
+            'simulacion',
+            'simulacion_titulo',
+            'respuesta_usuario',
+            'es_correcta',
+            'fecha_respuesta',
+        ]
+        read_only_fields = ['fecha_respuesta']
 
 
 class GenerarSimulacionRequestSerializer(serializers.Serializer):

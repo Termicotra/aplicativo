@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.db.models import F
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
@@ -106,3 +107,23 @@ class ResponderEjercicioAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Obtener respuestas del usuario',
+    description='Devuelve todas las respuestas que el usuario ha registrado en evaluaciones.',
+    responses={200: None},
+)
+class RespuestasEvaluacionAPIView(APIView):
+    """
+    Devuelve las respuestas del usuario en evaluaciones.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        respuestas = RespuestaEjercicio.objects.filter(usuario=request.user).select_related('ejercicio').values(
+            'id', 'usuario', 'ejercicio', 'es_correcta', 'fecha_respuesta'
+        ).annotate(ejercicio_tema=F('ejercicio__tema'))
+
+        return Response(list(respuestas), status=status.HTTP_200_OK)

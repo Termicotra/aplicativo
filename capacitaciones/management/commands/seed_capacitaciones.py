@@ -89,7 +89,7 @@ SEED_LECCIONES = [
         'duracion': '6 min',
         'orden': 4,
         'contenido_titulo': 'Seguridad en SMS',
-        'bloqueada': True,
+        'bloqueada': False,
         'secciones': [
             {
                 'encabezado': 'Que es Smishing?',
@@ -114,7 +114,7 @@ SEED_LECCIONES = [
         'duracion': '7 min',
         'orden': 5,
         'contenido_titulo': 'Amenazas en Redes Sociales',
-        'bloqueada': True,
+        'bloqueada': False,
         'secciones': [
             {
                 'encabezado': 'Riesgos en redes sociales',
@@ -139,7 +139,7 @@ SEED_LECCIONES = [
         'duracion': '10 min',
         'orden': 6,
         'contenido_titulo': 'Mejores Practicas de Seguridad',
-        'bloqueada': True,
+        'bloqueada': False,
         'secciones': [
             {
                 'encabezado': 'Medidas preventivas',

@@ -56,6 +56,30 @@ class Simulacion(models.Model):
         return f'{self.articulo.titulo[:30]} - {tipo}'
 
 
+class RespuestaSimulacion(models.Model):
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='respuestas_simulaciones',
+    )
+    simulacion = models.ForeignKey(
+        Simulacion,
+        on_delete=models.CASCADE,
+        related_name='respuestas',
+    )
+    respuesta_usuario = models.BooleanField(help_text="True = Phishing, False = Legítimo")
+    es_correcta = models.BooleanField(default=False)
+    fecha_respuesta = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'respuesta_simulacion'
+        unique_together = ['usuario', 'simulacion']
+        ordering = ['-fecha_respuesta']
+
+    def __str__(self):
+        return f'{self.usuario.username} - Simulacion {self.simulacion.id}'
+
+
 class AIInteraction(models.Model):
     """Registra los prompts enviados a la API de IA y sus respuestas."""
     # Identificador único secuencial para auditoría externa

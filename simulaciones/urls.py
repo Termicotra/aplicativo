@@ -6,6 +6,7 @@ from .views import (
     ObtenerSimulacionAleatoria,
     OpuestoSimulacion,
     RegistrarRespuestaSimulacion,
+    RespuestasSimulacionAPIView,
 )
 
 router = DefaultRouter()
@@ -16,6 +17,7 @@ custom_urls = [
     path('obtener-aleatoria/', ObtenerSimulacionAleatoria.as_view(), name='obtener-simulacion-aleatoria'),
     path('opuesto/', OpuestoSimulacion.as_view(), name='opuesto-simulacion'),
     path('registrar-respuesta/', RegistrarRespuestaSimulacion.as_view(), name='registrar-respuesta'),
+    path('mis-respuestas/', RespuestasSimulacionAPIView.as_view(), name='mis-respuestas'),
 ]
 
 urlpatterns = custom_urls + router.urls

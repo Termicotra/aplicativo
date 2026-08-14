@@ -1,5 +1,5 @@
 ﻿from django.contrib.auth import get_user_model
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Count, Q
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
@@ -9,8 +9,8 @@ from rest_framework.views import APIView
 from articulos.models import Articulo
 
 from .ai_service import AIServiceError, generar_simulacion_y_feedback
-from .models import Simulacion
-from .serializers import GenerarSimulacionRequestSerializer, SimulacionSerializer
+from .models import Simulacion, RespuestaSimulacion
+from .serializers import GenerarSimulacionRequestSerializer, SimulacionSerializer, RespuestaSimulacionSerializer
 
 User = get_user_model()
 
@@ -357,36 +357,46 @@ class RegistrarRespuestaSimulacion(APIView):
     """
     Registra la respuesta del usuario (phishing o no-phishing) y evalúa si fue correcta.
     """
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = SimulacionSerializer
 
     def post(self, request):
         simulacion_id = request.data.get('simulacion_id')
         respuesta_usuario = request.data.get('respuesta_usuario')  # 'phishing' o 'no-phishing'
-        
+
         if not simulacion_id or not respuesta_usuario:
             return Response(
                 {'detail': 'Se requiere simulacion_id y respuesta_usuario.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         if respuesta_usuario not in ['phishing', 'no-phishing']:
             return Response(
                 {'detail': 'respuesta_usuario debe ser "phishing" o "no-phishing".'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         simulacion = get_object_or_404(Simulacion, id=simulacion_id)
-        
+
         # Determinar si fue correcto
         esperado_es_phishing = simulacion.es_phishing
         usuario_dijo_phishing = respuesta_usuario == 'phishing'
         fue_correcto = esperado_es_phishing == usuario_dijo_phishing
-        
-        # Registrar respuesta
+
+        # Registrar respuesta en RespuestaSimulacion
+        _, _ = RespuestaSimulacion.objects.update_or_create(
+            usuario=request.user,
+            simulacion=simulacion,
+            defaults={
+                'respuesta_usuario': usuario_dijo_phishing,
+                'es_correcta': fue_correcto,
+            }
+        )
+
+        # Registrar respuesta en Simulacion también (compatibilidad)
         simulacion.resultado = 'correcto' if fue_correcto else 'incorrecto'
         simulacion.save(update_fields=['resultado'])
-        
+
         return Response(
             {
                 'simulacion_id': simulacion.id,
@@ -401,3 +411,21 @@ class RegistrarRespuestaSimulacion(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+@extend_schema(
+    tags=['Simulaciones'],
+    summary='Obtener respuestas del usuario en simulaciones',
+    description='Devuelve todas las respuestas que el usuario ha registrado en simulaciones.',
+    responses={200: RespuestaSimulacionSerializer(many=True)},
+)
+class RespuestasSimulacionAPIView(APIView):
+    """
+    Devuelve las respuestas del usuario en simulaciones.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        respuestas = RespuestaSimulacion.objects.filter(usuario=request.user).select_related('simulacion__articulo')
+        serializer = RespuestaSimulacionSerializer(respuestas, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
