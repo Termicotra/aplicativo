@@ -10,6 +10,7 @@ SEED_LECCIONES = [
         'duracion': '5 min',
         'orden': 1,
         'contenido_titulo': 'Introduccion al Phishing',
+        'bloqueada': False,
         'secciones': [
             {
                 'encabezado': 'Definicion',

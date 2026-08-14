@@ -18,6 +18,7 @@ class SeccionLeccionSerializer(serializers.ModelSerializer):
 
 class LeccionListSerializer(serializers.ModelSerializer):
     completed = serializers.SerializerMethodField()
+    bloqueada = serializers.SerializerMethodField()
 
     class Meta:
         model = Leccion
@@ -42,10 +43,38 @@ class LeccionListSerializer(serializers.ModelSerializer):
             completada=True,
         ).exists()
 
+    def get_bloqueada(self, obj):
+        request = self.context.get('request')
+
+        if obj.bloqueada:
+            return True
+
+        if not request or not request.user.is_authenticated:
+            return obj.orden > 1
+
+        if obj.orden == 1:
+            return False
+
+        leccion_anterior = Leccion.objects.filter(
+            orden=obj.orden - 1,
+            activa=True,
+        ).first()
+
+        if not leccion_anterior:
+            return False
+
+        return not ProgresoCapacitacion.objects.filter(
+            usuario=request.user,
+            leccion=leccion_anterior,
+            completada=True,
+        ).exists()
+
 
 class LeccionDetailSerializer(serializers.ModelSerializer):
     secciones = SeccionLeccionSerializer(many=True, read_only=True)
     contenido = serializers.SerializerMethodField()
+    completed = serializers.SerializerMethodField()
+    bloqueada = serializers.SerializerMethodField()
 
     class Meta:
         model = Leccion
@@ -59,6 +88,7 @@ class LeccionDetailSerializer(serializers.ModelSerializer):
             'bloqueada',
             'fecha_creacion',
             'secciones',
+            'completed',
         ]
 
     def get_contenido(self, obj):
@@ -73,6 +103,42 @@ class LeccionDetailSerializer(serializers.ModelSerializer):
                 for s in obj.secciones.all()
             ],
         }
+
+    def get_completed(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        return ProgresoCapacitacion.objects.filter(
+            usuario=request.user,
+            leccion=obj,
+            completada=True,
+        ).exists()
+
+    def get_bloqueada(self, obj):
+        request = self.context.get('request')
+
+        if obj.bloqueada:
+            return True
+
+        if not request or not request.user.is_authenticated:
+            return obj.orden > 1
+
+        if obj.orden == 1:
+            return False
+
+        leccion_anterior = Leccion.objects.filter(
+            orden=obj.orden - 1,
+            activa=True,
+        ).first()
+
+        if not leccion_anterior:
+            return False
+
+        return not ProgresoCapacitacion.objects.filter(
+            usuario=request.user,
+            leccion=leccion_anterior,
+            completada=True,
+        ).exists()
 
 
 class ProgresoCapacitacionSerializer(serializers.ModelSerializer):
