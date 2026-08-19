@@ -127,3 +127,20 @@ class RespuestasEvaluacionAPIView(APIView):
         ).annotate(ejercicio_tema=F('ejercicio__tema'))
 
         return Response(list(respuestas), status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Obtener totales de evaluaciones',
+    description='Devuelve el total de ejercicios activos disponibles.',
+    responses={200: None},
+)
+class TotalesEvaluacionAPIView(APIView):
+    """
+    Devuelve los totales de evaluaciones disponibles.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        total_evaluaciones = Ejercicio.objects.filter(activo=True).count()
+        return Response({'total': total_evaluaciones}, status=status.HTTP_200_OK)

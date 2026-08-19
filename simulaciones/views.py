@@ -429,3 +429,20 @@ class RespuestasSimulacionAPIView(APIView):
         respuestas = RespuestaSimulacion.objects.filter(usuario=request.user).select_related('simulacion__articulo')
         serializer = RespuestaSimulacionSerializer(respuestas, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Simulaciones'],
+    summary='Obtener totales de simulaciones',
+    description='Devuelve el total de simulaciones disponibles.',
+    responses={200: None},
+)
+class TotalesSimulacionAPIView(APIView):
+    """
+    Devuelve los totales de simulaciones disponibles.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        total_simulaciones = Simulacion.objects.count()
+        return Response({'total': total_simulaciones}, status=status.HTTP_200_OK)

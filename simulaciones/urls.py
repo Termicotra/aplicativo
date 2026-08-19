@@ -7,6 +7,7 @@ from .views import (
     OpuestoSimulacion,
     RegistrarRespuestaSimulacion,
     RespuestasSimulacionAPIView,
+    TotalesSimulacionAPIView,
 )
 
 router = DefaultRouter()
@@ -18,6 +19,7 @@ custom_urls = [
     path('opuesto/', OpuestoSimulacion.as_view(), name='opuesto-simulacion'),
     path('registrar-respuesta/', RegistrarRespuestaSimulacion.as_view(), name='registrar-respuesta'),
     path('mis-respuestas/', RespuestasSimulacionAPIView.as_view(), name='mis-respuestas'),
+    path('totales/', TotalesSimulacionAPIView.as_view(), name='totales'),
 ]
 
 urlpatterns = custom_urls + router.urls
