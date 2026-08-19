@@ -112,19 +112,21 @@ class ResponderEjercicioAPIView(APIView):
 @extend_schema(
     tags=['Evaluaciones'],
     summary='Obtener respuestas del usuario',
-    description='Devuelve todas las respuestas que el usuario ha registrado en evaluaciones.',
+    description='Devuelve la última respuesta que el usuario ha registrado en cada evaluación.',
     responses={200: None},
 )
 class RespuestasEvaluacionAPIView(APIView):
     """
-    Devuelve las respuestas del usuario en evaluaciones.
+    Devuelve la última respuesta del usuario en cada evaluación.
+    Filtra para obtener solo la respuesta más reciente por ejercicio.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
+        # Obtener la última respuesta por ejercicio
         respuestas = RespuestaEjercicio.objects.filter(usuario=request.user).select_related('ejercicio').values(
             'id', 'usuario', 'ejercicio', 'es_correcta', 'fecha_respuesta'
-        ).annotate(ejercicio_tema=F('ejercicio__tema'))
+        ).annotate(ejercicio_tema=F('ejercicio__tema')).order_by('ejercicio', '-fecha_respuesta').distinct('ejercicio')
 
         return Response(list(respuestas), status=status.HTTP_200_OK)
 
