@@ -48,302 +48,99 @@ PARAGUAY_KEYWORDS = (
     'paraguay',
     'paraguayo',
     'paraguaya',
-    'paraguayos',
-    'paraguayas',
     'asuncion',
-    'asunción',
     'encarnacion',
-    'encarnación',
     'ciudad del este',
     'ministerio publico',
-    'ministerio público',
     'poder judicial',
     'corte suprema de justicia',
-    'corte suprema',
     'policia nacional',
-    'policía nacional',
     'cert py',
-    'cert.gov.py',
-    'cert paraguay',
-    'banco del paraguay',
-    'banco paraguayo',
-    'banco central',
-    'itaipú',
-    'itaipu',
-    'rio parana',
-    'río paraná',
-    'aeropuerto silvio pettirossi',
-    'silvio pettirossi',
-    'tenaris',
-    'industrias paraguayas',
-    'empresa paraguaya',
-    'empresas paraguayas',
-    'bancos paraguayos',
-    'gobierno paraguayo',
-    'senatur',
-    'setec',
-    'dinac',
-    'aduana',
-    'impuestos internos',
 )
 
-# Acciones específicas de phishing que hacen los atacantes
-# (SOLO: envían, redirigen, suplantan, capturan credenciales - los atacantes siempre)
+# Acciones que hacen los atacantes (envían, redirigen, suplantan, etc.)
 ATTACK_ACTION_KEYWORDS = (
     'los atacantes',
     'el atacante',
-    'atacantes',
+    'el usuario',
     'envian',
     'envia',
-    'envía',
     'redirigen',
     'redirige',
     'suplantan',
     'suplanta',
     'hacen pasar',
-    'hace pasar',
+    'simulan',
+    'simula',
     'capturan credenciales',
-    'captura de credenciales',
     'roban credenciales',
-    'robo de credenciales',
-    'solicita datos',
-    'solicitan datos',
-    'solicita credenciales',
-    'solicitan credenciales',
-    'pide datos',
-    'piden datos',
 )
 
 # Patrones regex para detectar flujos de ataque (primero...luego, paso a paso)
 ATTACK_FLOW_PATTERNS = (
     r'\bprimero\b.{0,120}\bluego\b',  # "primero X luego Y"
-    r'\bprimero\b.{0,120}\bdespues\b|\bdespués\b',  # "primero X después Y"
     r'\bel proceso consiste en\b',  # "el proceso consiste en"
-    r'\bel ataque funciona\b',  # "el ataque funciona"
-    r'\bel ataque trabaja\b',  # "el ataque trabaja"
-    r'\bcomo funciona\b',  # "cómo funciona"
+    r'\bel ataque funciona asi\b',  # "el ataque funciona así"
     r'\bpaso a paso\b',  # "paso a paso"
-    r'\bpaso 1\b|\bpaso 2\b|\bpaso 3\b',  # "paso 1, paso 2, etc"
     r'\bcadena de ataque\b',  # "cadena de ataque"
-    r'\bsecuencia de\b',  # "secuencia de"
-    r'\bflujo de\b',  # "flujo de"
-    r'\be luego\b',  # "e luego"
-    r'\baseguir\b|\ba continuacion\b|\ba continuación\b',  # "a continuación"
-    r'\bllamadas consecutivas\b',  # "llamadas consecutivas"
-    r'\ben este orden\b',  # "en este orden"
 )
 
 # Palabras específicas sobre operaciones phishing/smishing
 PHISHING_OPERATION_KEYWORDS = (
     'campana de phishing',
-    'campaña de phishing',
     'correo falso',
     'correo fraudulento',
     'mensaje fraudulento',
     'sitio falso',
     'pagina falsa',
-    'página falsa',
     'sitio clonado',
-    'pagina clonada',
-    'página clonada',
     'captura de credenciales',
     'robo de credenciales',
     'suplantacion de identidad',
-    'suplantación de identidad',
     'enlace malicioso',
     'url maliciosa',
-    'URL maliciosa',
     'bancos paraguayos',
     'campana de smishing',
-    'campaña de smishing',
     'sms falso',
     'sms fraudulento',
     'mensaje de texto falso',
     'suplantacion por sms',
-    'suplantación por SMS',
-    'fraude electronico',
-    'fraude electrónico',
-    'ciberataque',
-    'ciberdelincuentes',
-    'delincuentes ciberneticos',
-    'delincuentes cibernéticos',
-    'estafadores en linea',
-    'estafadores en línea',
-    'ofertas falsas',
-    'promocion falsa',
-    'promoción falsa',
-    'descuento falso',
 )
 
-# TÁCTICAS DE PHISHING PURO - Solo lo relevante para generar simulaciones realistas
-# (Eliminado: certificados, IPs, servidores, tokens, scripts, plugins - son detalles técnicos irrelevantes)
-PHISHING_TACTICS_KEYWORDS = (
+# Objetos técnicos mencionados (URLs, QR, etc.)
+TECHNICAL_OBJECT_KEYWORDS = (
     'enlaces falsos',
-    'enlace falso',
-    'enlace malicioso',
     'pagina clonada',
-    'página clonada',
     'paginas clonadas',
-    'páginas clonadas',
     'qr malicioso',
-    'codigo qr malicioso',
-    'código QR malicioso',
     'quishing',
     'deepfake de voz',
-    'deepfake',
     'sms spoofing',
     'sms clonado',
     'spoof de sms',
-    'spoofing',
     'enlace en sms',
-    'url acortada',
     'url acortada',
     'bit.ly',
     'tinyurl',
-    'shorturl',
-    'formulario falso',
-    'formulario malicioso',
-    'sitio malicioso',
-    'pagina maliciosa',
-    'página maliciosa',
-    'dominio falso',
-    'dominio clonado',
-    'correo falso',
-    'correo malicioso',
-    'sms falso',
-    'sms malicioso',
-    'mensaje falso',
-    'mensaje malicioso',
-    'notificacion falsa',
-    'notificación falsa',
-    'alerta falsa',
-    'codigo de verificacion falso',
-    'código de verificación falso',
-    'otp falso',
-    'sesion falsa',
-    'sesión falsa',
-    'app falsa',
-)
-
-# Nuevas palabras clave: Ingeniería social y tácticas de manipulación
-SOCIAL_ENGINEERING_KEYWORDS = (
-    'presion psicologica',
-    'presión psicológica',
-    'presion temporal',
-    'presión temporal',
-    'urgencia',
-    'urgente',
-    'ahora mismo',
-    'inmediatamente',
-    'crear urgencia',
-    'genera urgencia',
-    'amenaza',
-    'amenaza de',
-    'amenaza implícita',
-    'suplantacion de identidad',
-    'suplantación de identidad',
-    'se hace pasar',
-    'hace pasar por',
-    'falsa confianza',
-    'genera confianza',
-    'manipulacion psicologica',
-    'manipulación psicológica',
-    'explotacion de confianza',
-    'explotación de confianza',
-    'solicita datos personales',
-    'solicita datos sensibles',
-    'solicita credenciales de acceso',
-    'redacta como',
-    'redacta mensajes falsos',
-    'cuerpo del mensaje',
-    'contenido del mensaje',
-    'tono de autoridad',
-    'se presenta como autoridad',
-    'crea miedo',
-    'genera miedo',
-    'promesa falsa',
-    'promesas falsas',
-    'oferta falsa',
-    'oferta engañosa',
-    'descuento falso',
-    'oferta irresistible',
-    'recompensa falsa',
-    'premios falsos',
-    'cuenta bloqueada',
-    'acceso suspendido',
-    'actualización obligatoria',
-    'acción inmediata',
-    'engaña',
-    'engañan',
-    'convence',
-    'convencen',
-    'presiona',
-    'presionan',
-    'falsifica',
-    'imita',
-    'copia',
 )
 
 # Palabras de recomendación de seguridad
 RECOMMENDATION_KEYWORDS = (
     'se recomienda',
     'recomendamos',
-    'se aconseja',
-    'aconsejamos',
     'no haga clic',
-    'no hacer clic',
     'no compartir',
-    'no comparta',
     'verifique',
-    'verificar',
-    'verificacion',
-    'verificación',
     'activar',
-    'activa',
-    'activado',
     'doble factor',
     'autenticacion de dos factores',
-    'autenticación de dos factores',
-    '2fa',
     'reportar',
-    'reporte',
-    'denunciar',
-    'denuncia',
     'como evitar',
-    'cómo evitar',
     'evitar este ataque',
     'prevenir',
     'prevenga',
-    'prevencion',
-    'prevención',
     'proteja',
-    'protege',
     'proteccion',
-    'protección',
-    'cambiar contraseña',
-    'cambiar contrasena',
-    'reseteando',
-    'actualizar',
-    'actualice',
-    'configurar',
-    'configure',
-    'vigile',
-    'vigil',
-    'cuidado',
-    'cuidese',
-    'cuidadoso',
-    'precaucion',
-    'precaución',
-    'no proporcione',
-    'no proporcionar',
-    'no ingrese',
-    'no compartir',
-    'desconfiar',
-    'desconfiado',
-    'sospechar',
-    'sospecha',
-    'validacion',
-    'validación',
 )
 
 # Marcadores de secuencia en oraciones
@@ -359,22 +156,9 @@ SEQUENCE_SENTENCE_MARKERS = (
 # Palabras que identifican al origen del ataque
 ORIGIN_MARKERS = (
     'los atacantes',
-    'atacantes',
     'ciberdelincuentes',
     'los estafadores',
-    'estafadores',
     'actores maliciosos',
-    'actores ciberneticos',
-    'actores cibernéticos',
-    'grupos de',
-    'grupo criminal',
-    'delincuentes',
-    'criminales',
-    'maliciosos',
-    'redes de fraude',
-    'banda de',
-    'organizacion criminal',
-    'organización criminal',
 )
 
 # Palabras que identifican el objetivo del ataque
@@ -383,21 +167,6 @@ TARGET_MARKERS = (
     'usuarios de',
     'personas usuarias',
     'victimas',
-    'víctimas',
-    'usuarios de',
-    'clientes de',
-    'afectados',
-    'afectadas',
-    'personas afectadas',
-    'residentes de',
-    'habitantes de',
-    'ciudadanos de',
-    'empresas',
-    'empresarios',
-    'profesionales de',
-    'trabajadores de',
-    'personas mayores',
-    'adultos mayores',
 )
 
 # Canales de ataque (tupla: nombre -> palabras clave)
@@ -426,19 +195,10 @@ def _clean_text(raw: str | None) -> str:
     value = value.replace('«', '"').replace('»', '"')  # U+00AB, U+00BB -> "
     # Eliminar etiquetas HTML
     value = re.sub(r'<[^>]+>', ' ', value)
-    # Eliminar frases de navegación y "Lea más"
+    # Eliminar frases de "Lea más", "Ver más", "Artículo relacionado"
     value = re.sub(r'(?i)\blea\s+m[áa]s\s*:?\s*', ' ', value)
     value = re.sub(r'(?i)\bver\s+m[áa]s\s*:?\s*', ' ', value)
     value = re.sub(r'(?i)\bart[íi]culo\s+relacionado\b.*$', ' ', value)
-    value = re.sub(r'(?i)\bcompartir\b.*?(?=\s[a-z]|\s|$)', ' ', value)
-    value = re.sub(r'(?i)\bsiguiente\b', ' ', value)
-    value = re.sub(r'(?i)\banterior\b', ' ', value)
-    value = re.sub(r'(?i)\bvolver\b.*?(?=\s[a-z]|\s|$)', ' ', value)
-    # Eliminar fechas de publicación y metadata
-    value = re.sub(r'(?i)\b(publicado|escrito|por|autor|autora|en)\s+(el\s+)?\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', ' ', value)
-    value = re.sub(r'(?i)\b(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo).*?\d{1,2}\s+(de\s+)?\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b', ' ', value)
-    # Eliminar referencias a comentarios, likes, shares
-    value = re.sub(r'(?i)\b(\d+\s+)?(comentarios?|likes?|compartidas?|comentado|liked)\b', ' ', value)
     # Colapsar espacios múltiples y recortar
     value = re.sub(r'\s+', ' ', value).strip()
     return value
@@ -452,56 +212,12 @@ def _normalize_for_match(text: str) -> str:
 
 
 def _split_sentences(text: str) -> list[str]:
-    """Dividir texto en oraciones. Solo retorna oraciones con ≥15 caracteres."""
+    """Dividir texto en oraciones. Solo retorna oraciones con ≥12 caracteres."""
     cleaned = re.sub(r'\s+', ' ', text).strip()  # Colapsar espacios
     if not cleaned:
         return []
     parts = re.split(r'(?<=[\.!?])\s+', cleaned)  # Dividir por . ! ?
-    sentences = [item.strip() for item in parts if len(item.strip()) >= 15]  # Filtrar por longitud (15 chars)
-    return sentences
-
-
-def _is_generic_sentence(text: str) -> bool:
-    """Detectar si una oración es demasiado genérica o no relevante. Retorna True si es genérica."""
-    normalized = _normalize_for_match(text)
-    # Frases genéricas que no aportan sobre el ataque
-    generic_patterns = (
-        r'\bes importante\b',
-        r'\bse recomienda estar alerta\b',
-        r'\bse debe tener cuidado\b',
-        r'\btodos debemos\b',
-        r'\brecuerde que\b',
-        r'\bcomo siempre\b',
-        r'\ben conclusi[óo]n\b',
-        r'\bpara finalizar\b',
-        r'\bademas\b|\bademás\b',
-        r'\bsiguiente\b',
-        r'\banterior\b',
-        r'^[a-z\s]{1,20}$',  # Muy corta (menos de 20 caracteres, después de filtrar)
-    )
-    return any(re.search(pattern, normalized, flags=re.IGNORECASE) for pattern in generic_patterns)
-
-
-def _calculate_string_similarity(s1: str, s2: str) -> float:
-    """Calcular similitud entre dos strings. Retorna valor entre 0 y 1."""
-    s1_norm = _normalize_for_match(s1)
-    s2_norm = _normalize_for_match(s2)
-
-    # Si uno contiene al otro, son muy similares
-    if s1_norm in s2_norm or s2_norm in s1_norm:
-        return 0.9
-
-    # Calcular similitud simple basada en palabras comunes
-    words1 = set(s1_norm.split())
-    words2 = set(s2_norm.split())
-
-    if not words1 or not words2:
-        return 0.0
-
-    common = len(words1 & words2)
-    total = len(words1 | words2)
-
-    return common / total if total > 0 else 0.0
+    return [item.strip() for item in parts if len(item.strip()) >= 12]  # Filtrar por longitud
 
 
 def _infer_attack_channel(text_normalized: str) -> str:
@@ -538,11 +254,8 @@ def _extract_list_items_from_html(html: str, marker_text: str, max_items: int = 
             cleaned = cleaned.replace('&ldquo;', '"').replace('&rdquo;', '"')
             cleaned = cleaned.replace('&lsquo;', "'").replace('&rsquo;', "'")
             cleaned = cleaned.replace('&amp;', '&')
-            cleaned = cleaned.replace('&lt;', '<').replace('&gt;', '>')
-            cleaned = cleaned.replace('&quot;', '"').replace('&#039;', "'")
             cleaned = re.sub(r'\s+', ' ', cleaned).strip()  # Colapsar espacios
-            # Filtrar items muy cortos (menos de 10 caracteres = ruido)
-            if cleaned and len(cleaned) >= 10:
+            if cleaned:
                 items.append(cleaned)
 
         return items
@@ -566,62 +279,31 @@ def _extract_attack_context(*, title: str, content: str, html: str = '') -> dict
     target_line = ''  # A quién ataca
     recommendation_tail = 0  # Contador para capturar oraciones después de recomendaciones
 
-    def _is_too_similar(text: str, existing_list: list[str], threshold: float = 0.75) -> bool:
-        """Verificar si el texto es demasiado similar a algo en la lista existente."""
-        for item in existing_list:
-            if _calculate_string_similarity(text, item) >= threshold:
-                return True
-        return False
-
     # Iterar sobre cada oración y clasificarla
     for raw, normalized in zip(sentences, normalized_sentences):
-        # Saltar si es demasiado genérica
-        if _is_generic_sentence(raw):
-            continue
+        # Capturar acciones del atacante (máx 4)
+        if any(keyword in normalized for keyword in ATTACK_ACTION_KEYWORDS) and len(process_lines) < 4:
+            process_lines.append(raw)
 
-        # PHISHING PURO: Capturar TÁCTICAS de ingeniería social + acciones de atacante
-        has_phishing_tactic = any(tactic in normalized for tactic in PHISHING_TACTICS_KEYWORDS)
-        has_social_eng = any(tactic in normalized for tactic in SOCIAL_ENGINEERING_KEYWORDS)
-        has_action = any(keyword in normalized for keyword in ATTACK_ACTION_KEYWORDS)
-
-        # Captura: acciones de atacante OR tácticas phishing OR ingeniería social
-        if (has_action or has_phishing_tactic or has_social_eng) and len(process_lines) < 8:
-            if not _is_too_similar(raw, process_lines, 0.8):
-                process_lines.append(raw)
-
-        # MEJORA ENFOCADA: Capturar SECUENCIA DE PHISHING (cómo ocurre el ataque)
-        # Palabras clave para describir "cómo" ocurre el phishing paso a paso
-        sequence_keywords = [
-            'primero', 'luego', 'después', 'entonces', 'a continuacion',
-            'siguiendo', 'paso', 'pasos', '1.', '2.', '3.',
-            'recibe', 'hace clic', 'ingresa', 'completa', 'accede',
-            'es redirigido', 'lleva a', 'abre', 'descarga', 'instala',
-            'captura', 'obtiene', 'roba', 'extrae'
-        ]
-
-        has_sequence = any(kw in normalized for kw in sequence_keywords)
-
-        if has_sequence and len(sequence_lines) < 8:
-            if not _is_too_similar(raw, sequence_lines, 0.8):
-                sequence_lines.append(raw)
+        # Capturar oraciones de secuencia (máx 4)
+        if any(marker in normalized for marker in SEQUENCE_SENTENCE_MARKERS) and len(sequence_lines) < 4:
+            sequence_lines.append(raw)
 
         # Si detecta recomendación, añade y prepara para capturar oraciones siguientes
         recommendation_triggered = any(keyword in normalized for keyword in RECOMMENDATION_KEYWORDS)
-        if recommendation_triggered and len(recommendation_lines) < 5:
-            if not _is_too_similar(raw, recommendation_lines, 0.8):
-                recommendation_lines.append(raw)
-            recommendation_tail = 2  # Capturar las próximas 2 oraciones (reducido de 3)
+        if recommendation_triggered and len(recommendation_lines) < 4:
+            recommendation_lines.append(raw)
+            recommendation_tail = 3  # Capturar las próximas 3 oraciones
             continue
 
         # Capturar variantes de "evite", "prevenir", etc.
-        prevention_keywords = ('evite', 'evitar', 'prevenir', 'proteja', 'proteccion', 'cambie', 'verifique', 'configure', 'actualice', 'vigile')
-        if any(keyword in normalized for keyword in prevention_keywords) and len(recommendation_lines) < 8:
-            if not _is_too_similar(raw, recommendation_lines, 0.8):
+        if any(keyword in normalized for keyword in ('evite', 'evitar', 'prevenir', 'proteja', 'proteccion', 'cambie', 'verifique')) and len(recommendation_lines) < 6:
+            if raw not in recommendation_lines:
                 recommendation_lines.append(raw)
 
-        # Si estamos en la "cola" de recomendaciones (2 oraciones después), añadir
-        if recommendation_tail > 0 and len(recommendation_lines) < 10:
-            if not _is_generic_sentence(raw) and not _is_too_similar(raw, recommendation_lines, 0.8):
+        # Si estamos en la "cola" de recomendaciones (3 oraciones después), añadir
+        if recommendation_tail > 0 and len(recommendation_lines) < 8:
+            if raw not in recommendation_lines:
                 recommendation_lines.append(raw)
             recommendation_tail -= 1
             continue
@@ -630,10 +312,9 @@ def _extract_attack_context(*, title: str, content: str, html: str = '') -> dict
         if recommendation_tail > 0:
             recommendation_tail -= 1
 
-        # Capturar tácticas de phishing mencionadas (ejemplos concretos de phishing)
-        if any(keyword in normalized for keyword in PHISHING_TACTICS_KEYWORDS) and len(example_lines) < 6:
-            if not _is_too_similar(raw, example_lines, 0.8):
-                example_lines.append(raw)
+        # Capturar objetos técnicos mencionados (máx 4)
+        if any(keyword in normalized for keyword in TECHNICAL_OBJECT_KEYWORDS) and len(example_lines) < 4:
+            example_lines.append(raw)
 
         # Capturar solo la PRIMERA mención del origen del ataque
         if not origin_line and any(marker in normalized for marker in ORIGIN_MARKERS):
@@ -672,20 +353,11 @@ def _extract_attack_context(*, title: str, content: str, html: str = '') -> dict
 
 def _extract_paragraph_text(html: str) -> str:
     """Extraer texto limpio de párrafos HTML. Retorna hasta 5000 caracteres."""
-    # Eliminar scripts, styles, SVGs, comentarios
+    # Eliminar scripts, styles, SVGs que no tienen contenido útil
     cleaned_html = re.sub(
         r'<(script|style|noscript|svg)[^>]*>.*?</\1>',
         ' ',
         html,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
-    # Eliminar comentarios HTML
-    cleaned_html = re.sub(r'<!--.*?-->', ' ', cleaned_html, flags=re.DOTALL)
-    # Eliminar navegación, footers, sidebars, widgets
-    cleaned_html = re.sub(
-        r'<(nav|footer|aside|[^>]*class=["\'].*?(sidebar|widget|nav|menu|footer|advertisement|ads?)["\'][^>]*)[^>]*>.*?</\1>',
-        ' ',
-        cleaned_html,
         flags=re.IGNORECASE | re.DOTALL,
     )
 
@@ -693,23 +365,15 @@ def _extract_paragraph_text(html: str) -> str:
     article_match = re.search(r'<article[^>]*>(.*?)</article>', cleaned_html, flags=re.IGNORECASE | re.DOTALL)
     if article_match:
         cleaned_html = article_match.group(1)
-    # Si no hay article, buscar main
-    else:
-        main_match = re.search(r'<main[^>]*>(.*?)</main>', cleaned_html, flags=re.IGNORECASE | re.DOTALL)
-        if main_match:
-            cleaned_html = main_match.group(1)
 
-    # Extraer párrafos <p> (máximo 50 para evitar basura)
+    # Extraer párrafos <p>
     paragraphs = re.findall(r'<p[^>]*>(.*?)</p>', cleaned_html, flags=re.IGNORECASE | re.DOTALL)
-    # Si no hay párrafos suficientes, intentar con <li> (pero máximo 20)
-    if len(paragraphs) < 5:
-        list_items = re.findall(r'<li[^>]*>(.*?)</li>', cleaned_html, flags=re.IGNORECASE | re.DOTALL)
-        paragraphs.extend(list_items[:20])
+    # Si no hay párrafos, intentar con <li>
+    if not paragraphs:
+        paragraphs = re.findall(r'<li[^>]*>(.*?)</li>', cleaned_html, flags=re.IGNORECASE | re.DOTALL)
 
     # Limpiar cada párrafo
-    cleaned = [_clean_text(item) for item in paragraphs[:50]]
-    # Filtrar párrafos muy cortos (menos de 15 caracteres = ruido)
-    cleaned = [item for item in cleaned if item and len(item) > 14]
+    cleaned = [_clean_text(item) for item in paragraphs]
     # Concatenar, eliminar vacíos, truncar a 5000 caracteres
     compact = ' '.join(item for item in cleaned if item)
     return compact[:5000].strip()
@@ -769,41 +433,40 @@ def _is_paraguay_relevant(*, title: str, content: str, url: str) -> bool:
 
 
 def _has_attack_flow_description(*, title: str, content: str) -> bool:
-    """Validar si describe un FLUJO DE PHISHING PURO. Requiere: tácticas de ingeniería social O flujo explícito."""
+    """Validar si describe un flujo de ataque. Múltiples criterios: acciones, flujos, objetos técnicos, operaciones."""
     text = _normalize_for_match(f'{title} {content}')
 
-    # Contar evidencia de phishing puro
+    # Contar cuántas palabras clave de cada tipo aparecen
     action_hits = sum(1 for keyword in ATTACK_ACTION_KEYWORDS if keyword in text)  # Qué hacen los atacantes
     flow_hit = any(re.search(pattern, text, flags=re.IGNORECASE | re.DOTALL) for pattern in ATTACK_FLOW_PATTERNS)  # Pasos
-    tactics_hit = sum(1 for keyword in PHISHING_TACTICS_KEYWORDS if keyword in text)  # Tácticas phishing
-    social_eng_hits = sum(1 for keyword in SOCIAL_ENGINEERING_KEYWORDS if keyword in text)  # Ingeniería social
+    technical_hit = any(keyword in text for keyword in TECHNICAL_OBJECT_KEYWORDS)  # Objetos técnicos
     operation_hits = sum(1 for keyword in PHISHING_OPERATION_KEYWORDS if keyword in text)  # Operaciones phishing
 
-    # ✅ CRITERIO 1: Flujo explícito + ≥2 acciones de atacante
+    # Criterio 1: Tiene flujo explícito (primero...luego) + ≥2 acciones
     if flow_hit and action_hits >= 2:
         return True
 
-    # ✅ CRITERIO 2: ≥3 acciones de atacante (describe qué hace el atacante)
-    if action_hits >= 3:
+    # Criterio 2: ≥4 acciones de ataque (sin flujo explícito)
+    if action_hits >= 4:
         return True
 
-    # ✅ CRITERIO 3: Tácticas de phishing + ≥2 acciones
-    if tactics_hit >= 1 and action_hits >= 2:
+    # Criterio 3: Objeto técnico + ≥2 acciones
+    if technical_hit and action_hits >= 2:
         return True
 
-    # ✅ CRITERIO 4: ≥2 palabras de ingeniería social (presión, urgencia, miedo)
-    if social_eng_hits >= 2:
+    # Criterio 4: ≥2 operaciones phishing (CERT a menudo describe sin "primero/luego")
+    if operation_hits >= 2:
         return True
 
-    # ✅ CRITERIO 5: Operación phishing bien documentada + tácticas
-    if operation_hits >= 1 and (tactics_hit >= 1 or social_eng_hits >= 1):
+    # Criterio 5: Artículo educativo (objeto técnico + ≥1 operación)
+    if technical_hit and operation_hits >= 1:
         return True
 
-    # ✅ CRITERIO 6: Flujo explícito + táctica phishing (incluso sin acciones explícitas)
-    if flow_hit and tactics_hit >= 1:
+    # Criterio 6: Solo objeto técnico (artículos informativos sobre qué es smishing, QR malicioso, etc.)
+    if technical_hit:
         return True
 
-    return False  # No es phishing puro
+    return False  # No cumple ningún criterio
 
 
 def _passes_article_filters(article: dict[str, Any]) -> bool:
