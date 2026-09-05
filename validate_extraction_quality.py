@@ -53,8 +53,8 @@ print(f"\nCon secuencia_ataque: {with_sequence}/{total} ({sequence_precision:.1f
 print(f"Sin secuencia_ataque: {without_sequence}")
 
 # Ejemplos de buenos secuencia_ataque
-good_sequences = articles.filter(secuencia_ataque__length__gte=80).exclude(secuencia_ataque='')
-print(f"\nBuenos secuencia_ataque (>80 chars): {good_sequences.count()}/{total}")
+good_sequences = [a for a in articles if len(a.secuencia_ataque) >= 80]
+print(f"\nBuenos secuencia_ataque (>80 chars): {len(good_sequences)}/{total}")
 
 print("\n" + "=" * 80)
 print("VALIDACION 3: EJEMPLOS_ATAQUE (Tácticas de phishing)")
@@ -68,8 +68,8 @@ print(f"\nCon ejemplos_ataque: {with_examples}/{total} ({examples_precision:.1f}
 print(f"Sin ejemplos_ataque: {without_examples}")
 
 # Ejemplos de buenos ejemplos_ataque
-good_examples = articles.filter(ejemplos_ataque__length__gte=50).exclude(ejemplos_ataque='')
-print(f"\nBuenos ejemplos_ataque (>50 chars): {good_examples.count()}/{total}")
+good_examples = [a for a in articles if len(a.ejemplos_ataque) >= 50]
+print(f"\nBuenos ejemplos_ataque (>50 chars): {len(good_examples)}/{total}")
 
 print("\n" + "=" * 80)
 print("VALIDACION 4: DISTRIBUCION DE CAMPOS")
