@@ -3,7 +3,9 @@ from __future__ import annotations
 import json  # Para parsear JSON de APIs
 import logging  # Para registrar eventos
 import re  # Expresiones regulares
+import time  # Backoff entre reintentos HTTP
 import unicodedata  # Normalizar caracteres acentuados
+from html import unescape as html_unescape  # Decodificar entidades HTML (&#8211; &nbsp; &amp;)
 from datetime import date, datetime, timezone  # Manejo de fechas
 from email.utils import parsedate_to_datetime  # Parsear fechas en formato email
 from typing import Any  # Type hints
@@ -25,13 +27,33 @@ logger = logging.getLogger(__name__)  # Logger para registrar eventos de este m�
 # ============== CONFIGURACIÓN DE FUENTES ==============
 # ABC Color - búsqueda por API Queryly
 ABC_BASE_URL = 'https://www.abc.com.py'
-ABC_SEARCH_QUERIES = ('phishing', 'smishing')  # Qué buscar en ABC
+ABC_SEARCH_QUERIES = (
+    'phishing',
+    'smishing',
+    'vishing',
+    'ciberestafa',
+    'estafa bancaria',
+    'suplantacion de identidad',
+    'vaciamiento de cuenta',
+    'correo falso',
+    'robo de cuentas',
+    'fraude electronico',
+)
 ABC_QUERYLY_KEY = '33530b56c6aa4c20'  # API key para búsqueda
 ABC_QUERYLY_ENDPOINT = 'https://api.queryly.com/json.aspx'  # Endpoint de búsqueda
 
 # CERT Paraguay - búsqueda por web scraping
 CERT_BASE_URL = 'https://www.cert.gov.py'
-CERT_SEARCH_TERMS = ('phishing', 'smishing', 'robo')  # Qué buscar en CERT
+CERT_SEARCH_TERMS = (
+    'phishing',
+    'smishing',
+    'vishing',
+    'suplantacion',
+    'correo fraudulento',
+    'robo de credenciales',
+    'ingenieria social',
+    'estafa',
+)
 CERT_EXCLUDED_PATHS = ('/soc-cert-py/',)  # Paths a ignorar
 
 # ============== CONFIGURACIÓN GENERAL ==============
@@ -409,6 +431,59 @@ CHANNEL_PATTERNS = (
     ('sitio-web', ('sitio web', 'pagina web', 'enlace', 'url')),
 )
 
+# Patrones de boilerplate de portales (newsletters, promos, metadata)
+BOILERPLATE_PATTERNS = (
+    r'\bunite\s+al\s+canal\s+de\s+\w+\s+en\s+\w+\b',  # "Unite al canal de ABC en WhatsApp"
+    r'\bdescargu?e?\s+la\s+app\b',  # "Descargue la app"
+    r'\bsiguien?do?\s+(la\s+)?cuenta\b',  # "Siguiendo la cuenta", "Seguí la cuenta"
+    r'\bsuscrib[íe]te?\s+a\s+\w+\b',  # "Suscríbete a", "Suscribite a"
+    r'\b\d{1,2}/\d{1,2}/\d{4}\s+(noticias|avisos|alertas)\s+\d+\b',  # "01/06/2022 Noticias 0"
+    r'\[\.{3}\]|\[\…\]',  # "[...]" "[…]" (teaser truncado)
+    r'\bseguir(nos)?\s+en\b',  # "Seguir en", "Seguirnos en"
+    r'\bleer\s+m[aá]s\b',  # "Leer más"
+    r'\bver\s+m[aá]s\b',  # "Ver más"
+    r'\bcontinuar\s+leyendo\b',  # "Continuar leyendo"
+)
+
+# Señales de que el artículo es sobre phishing (no solo menciona la palabra)
+PHISHING_TOPIC_TERMS = (
+    'phishing', 'smishing', 'vishing', 'quishing', 'ciberestafa', 'suplantacion de identidad',
+    'correo falso', 'robo de credenciales', 'vaciamiento de cuenta', 'ingenieria social',
+    'estafa bancaria', 'fraude electronico', 'campaña de phishing', 'ataque de phishing',
+)
+
+# Penalizaciones: vulnerabilidades técnicas de producto (CVEs, configuraciones, servidores)
+TECHNICAL_VULN_TERMS = (
+    'cve-', 'vulnerabilidad en productos', 'ejecucion remota de codigo', 'inyeccion sql',
+    'sql injection', 'xss attack', 'cross-site scripting', 'buffer overflow',
+    'path traversal', 'rce ', 'remote code', 'brute force attack', 'ddos',
+    'zero-day', 'exploit publico', 'no autenticado', 'bypass de autenticacion',
+    'usuario no autenticado',
+)
+
+# Penalizaciones: malware / infraestructura técnica (no es phishing puro)
+MALWARE_TECH_TERMS = (
+    'malware', 'troyano', 'ransomware', 'cadena de infeccion', 'backdoor', 'botnet',
+    'rootkit', 'spyware', 'gusano informatico', 'servidor linux', 'windows server', 'apache',
+)
+
+# Penalizaciones: operativos policiales (informan detenciones, no modus operandi)
+LAW_ENFORCEMENT_TERMS = (
+    'interpol', 'europol', 'extraditan', 'extradicion', 'detenidos', 'detenciones',
+    'desarticulan', 'desarticulada', 'condenado a', 'condenados a', 'golpe mundial',
+    'operacion internacional', 'imputado por',
+)
+
+# Penalizaciones: artículos enfocados en otros países (sin ángulo Paraguay)
+FOREIGN_FOCUS_TERMS = (
+    'en mexico', 'en brasil', 'en estados unidos', 'en argentina', 'en chile',
+    'en españa', 'en europa', 'en asia', 'en china', 'en rusia', 'en africa',
+)
+
+# Umbrales de relevancia
+MIN_RELEVANCE_SCORE = 5  # Puntaje mínimo para aceptar artículo
+MIN_EXTRACTED_MATERIAL = 200  # Mínimo de caracteres en campos extraídos
+
 
 def _fetch_xml(url: str, timeout: int = 15) -> str:
     """Descargar HTML/XML desde una URL. Retorna string decodificado UTF-8."""
@@ -418,8 +493,18 @@ def _fetch_xml(url: str, timeout: int = 15) -> str:
 
 
 def _clean_text(raw: str | None) -> str:
-    """Limpiar texto: quotes, HTML, frases innecesarias. Retorna texto compacto."""
+    """Limpiar texto: HTML entities, boilerplate, quotes. Retorna texto limpio."""
     value = raw or ''
+    # Decodificar entidades HTML (&#8211; -> –, &nbsp; -> espacio, &amp; -> &, etc)
+    value = html_unescape(value)
+    # Normalizar espacios no-quebrantes
+    value = value.replace('\xa0', ' ')
+    # Normalizar guiones tipográficos a ASCII
+    value = value.replace('–', '-').replace('—', '-')  # U+2013, U+2014 -> -
+    value = value.replace('…', '...')  # U+2026 -> ...
+    # Eliminar boilerplate de portales
+    for pattern in BOILERPLATE_PATTERNS:
+        value = re.sub(pattern, ' ', value, flags=re.IGNORECASE)
     # Normalizar comillas curvas/inteligentes a rectas
     value = value.replace('"', '"').replace('"', '"')  # U+201C, U+201D -> "
     value = value.replace(''', "'").replace(''', "'")  # U+2018, U+2019 -> '
@@ -670,6 +755,29 @@ def _extract_attack_context(*, title: str, content: str, html: str = '') -> dict
     }
 
 
+def _is_boilerplate_paragraph(text: str) -> bool:
+    """Detectar párrafos que son solo promoción/navegación del portal, no contenido."""
+    normalized = _normalize_for_match(text)
+
+    # Párrafos cortos que mencionan redes sociales o suscripción = promo
+    promo_terms = (
+        'whatsapp', 'telegram', 'facebook', 'instagram', 'twitter', 'suscri',
+        'newsletter', 'boletin', 'descarga la app', 'seguinos', 'siguenos',
+    )
+    if len(text) < 120 and any(term in normalized for term in promo_terms):
+        return True
+
+    # Solo metadata: fecha + categoría + contador
+    if re.fullmatch(r'[\d/\-\s]+(noticias|alertas|avisos)?\s*\d*', normalized.strip()):
+        return True
+
+    # Teaser de nota relacionada: termina en "[...]" o "[…]"
+    if normalized.rstrip().endswith('[...]') or normalized.rstrip().endswith('[…]'):
+        return True
+
+    return False
+
+
 def _extract_paragraph_text(html: str) -> str:
     """Extraer texto limpio de párrafos HTML. Retorna hasta 5000 caracteres."""
     # Eliminar scripts, styles, SVGs, comentarios
@@ -710,6 +818,8 @@ def _extract_paragraph_text(html: str) -> str:
     cleaned = [_clean_text(item) for item in paragraphs[:50]]
     # Filtrar párrafos muy cortos (menos de 15 caracteres = ruido)
     cleaned = [item for item in cleaned if item and len(item) > 14]
+    # Filtrar párrafos que son puramente boilerplate/promocionales
+    cleaned = [item for item in cleaned if not _is_boilerplate_paragraph(item)]
     # Concatenar, eliminar vacíos, truncar a 5000 caracteres
     compact = ' '.join(item for item in cleaned if item)
     return compact[:5000].strip()
@@ -806,21 +916,90 @@ def _has_attack_flow_description(*, title: str, content: str) -> bool:
     return False  # No es phishing puro
 
 
+def _calculate_relevance_score(*, title: str, content: str, url: str) -> int:
+    """Puntaje estricto de relevancia phishing. Suma señales, resta ruido.
+
+    Retorna int: positivo = relevante, negativo/bajo = rechazar.
+    """
+    combined = _normalize_for_match(f'{title} {content} {url}')
+    title_normalized = _normalize_for_match(title)
+    score = 0
+
+    # (+) Señales de phishing en TÍTULO: +3 c/u (máx 6, ponderado fuerte)
+    title_topic_hits = sum(1 for term in PHISHING_TOPIC_TERMS if term in title_normalized)
+    score += min(title_topic_hits * 3, 6)
+
+    # (+) Señales de phishing en CONTENIDO: +1 c/u (máx 4)
+    content_topic_hits = sum(1 for term in PHISHING_TOPIC_TERMS if term in combined)
+    score += min(content_topic_hits, 4)
+
+    # (+) Tácticas de ingeniería social: +1 c/u (máx 2)
+    tactic_hits = sum(1 for term in PHISHING_TACTICS_KEYWORDS if term in combined)
+    score += min(tactic_hits, 2)
+
+    # (+) Acciones de atacante: +1 c/u (máx 2)
+    action_hits = sum(1 for term in ATTACK_ACTION_KEYWORDS if term in combined)
+    score += min(action_hits, 2)
+
+    # (+) Paraguay mencionado en TEXTO: +3 (crucial para ABC que dice "phishing" de todo el mundo)
+    if any(term in combined for term in PARAGUAY_KEYWORDS):
+        score += 3
+
+    # (-) Vulnerabilidad técnica: −4 c/u
+    vuln_hits = sum(1 for term in TECHNICAL_VULN_TERMS if term in combined)
+    score -= vuln_hits * 4
+
+    # (-) Malware sin ángulo phishing: −4 c/u
+    if title_topic_hits == 0:  # Si el título no dice "phishing", penalizar malware
+        malware_hits = sum(1 for term in MALWARE_TECH_TERMS if term in combined)
+        score -= malware_hits * 4
+
+    # (-) Operativo policial: −5 c/u (siempre, describe detenciones no modus operandi)
+    enforcement_hits = sum(1 for term in LAW_ENFORCEMENT_TERMS if term in title_normalized)
+    score -= enforcement_hits * 5
+
+    # (-) Foco extranjero SIN mención de Paraguay: −4 c/u
+    has_paraguay = any(term in combined for term in PARAGUAY_KEYWORDS)
+    if not has_paraguay:
+        foreign_hits = sum(1 for term in FOREIGN_FOCUS_TERMS if term in combined)
+        score -= foreign_hits * 4
+
+    # (-) Sin ninguna señal phishing: −10 (automático rechazo)
+    if title_topic_hits == 0 and content_topic_hits == 0:
+        score -= 10
+
+    return score
+
+
 def _passes_article_filters(article: dict[str, Any]) -> bool:
-    """Validar que el artículo sea relevante para Paraguay Y describa un flujo de ataque."""
+    """Validar 4 filtros: Paraguay + puntaje + flujo + sustancia. CALIDAD antes que cantidad."""
     title = str(article.get('titulo', ''))
     content = str(article.get('contenido', ''))
     url = str(article.get('url', ''))
 
-    # Filtro 1: Es relevante para Paraguay
+    # Filtro 1: Relevancia Paraguay
     if not _is_paraguay_relevant(title=title, content=content, url=url):
         return False
 
-    # Filtro 2: Describe un flujo de ataque
+    # Filtro 2: Puntaje de relevancia estricto
+    score = _calculate_relevance_score(title=title, content=content, url=url)
+    if score < MIN_RELEVANCE_SCORE:
+        return False
+
+    # Filtro 3: Describe flujo de ataque
     if not _has_attack_flow_description(title=title, content=content):
         return False
 
-    return True  # Pasó ambos filtros
+    # Filtro 4: Material utilizable (proceso + secuencia + ejemplos ≥ 200 chars)
+    material = (
+        len(str(article.get('proceso_ataque', '')))
+        + len(str(article.get('secuencia_ataque', '')))
+        + len(str(article.get('ejemplos_ataque', '')))
+    )
+    if material < MIN_EXTRACTED_MATERIAL:
+        return False
+
+    return True  # Pasó los 4 filtros
 
 
 def _parse_date_strict(raw_date: str | None) -> date | None:
@@ -1031,7 +1210,7 @@ def _scrape_abc_from_search(max_items: int) -> list[dict[str, Any]]:
             # Construir URL de búsqueda (API Queryly)
             search_url = (
                 f'{ABC_QUERYLY_ENDPOINT}?queryly_key={ABC_QUERYLY_KEY}'
-                f'&query={query}&endindex={end_index}&batchsize={batch_size}'
+                f'&query={quote_plus(query)}&endindex={end_index}&batchsize={batch_size}'
                 '&showfaceted=true'
             )
 
