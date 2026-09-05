@@ -41,6 +41,7 @@ ABC_SEARCH_QUERIES = (
 )
 ABC_QUERYLY_KEY = '33530b56c6aa4c20'  # API key para búsqueda
 ABC_QUERYLY_ENDPOINT = 'https://api.queryly.com/json.aspx'  # Endpoint de búsqueda
+ABC_MAX_PAGES_PER_QUERY = 2  # Cota de páginas: evita loops infinitos si todo se rechaza
 
 # CERT Paraguay - búsqueda por web scraping
 CERT_BASE_URL = 'https://www.cert.gov.py'
@@ -485,7 +486,7 @@ MIN_RELEVANCE_SCORE = 5  # Puntaje mínimo para aceptar artículo
 MIN_EXTRACTED_MATERIAL = 200  # Mínimo de caracteres en campos extraídos
 
 
-def _fetch_xml(url: str, timeout: int = 15) -> str:
+def _fetch_xml(url: str, timeout: int = 5) -> str:
     """Descargar HTML/XML desde una URL. Retorna string decodificado UTF-8."""
     request = Request(url, headers={'User-Agent': USER_AGENT})  # Crear request con User-Agent
     with urlopen(request, timeout=timeout) as response:  # Abrir URL con timeout
@@ -1204,9 +1205,11 @@ def _scrape_abc_from_search(max_items: int) -> list[dict[str, Any]]:
         end_index = 0  # Índice para paginación
         batch_size = min(20, target_items)  # Tamaño de batch (máx 20)
         query_items = []  # Items encontrados para esta query
+        pages_fetched = 0  # Contador de páginas (cota de seguridad)
 
-        # Loop de paginación: buscar hasta tener target_items
-        while len(query_items) < target_items:
+        # Loop de paginación: buscar hasta tener target_items O agotar páginas
+        while len(query_items) < target_items and pages_fetched < ABC_MAX_PAGES_PER_QUERY:
+            pages_fetched += 1
             # Construir URL de búsqueda (API Queryly)
             search_url = (
                 f'{ABC_QUERYLY_ENDPOINT}?queryly_key={ABC_QUERYLY_KEY}'
