@@ -10,7 +10,7 @@ class Articulo(models.Model):
 	ejemplos_ataque = models.TextField(default='')
 	origen_ataque = models.TextField(default='')
 	objetivo_ataque = models.TextField(default='')
-	canal_ataque = models.CharField(max_length=30, default='indefinido')
+	canal_ataque = models.TextField(default='')  # Cambiar a TextField para valores largos de IA
 	fuente = models.CharField(max_length=100)
 	url = models.URLField(unique=True)
 	fecha = models.DateField()
