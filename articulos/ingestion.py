@@ -251,6 +251,7 @@ PHISHING_TACTICS_KEYWORDS = (
     'sesion falsa',
     'sesión falsa',
     'app falsa',
+    'bono', 'premio', 'regalo', 'adelanto', 'comisión', 'voucher falso', 'código de descuento falso',
 )
 
 # Nuevas palabras clave: Ingeniería social y tácticas de manipulación
@@ -456,6 +457,7 @@ PHISHING_TOPIC_TERMS = (
     'phishing', 'smishing', 'vishing', 'quishing', 'ciberestafa', 'suplantacion de identidad',
     'correo falso', 'robo de credenciales', 'vaciamiento de cuenta', 'ingenieria social',
     'estafa bancaria', 'fraude electronico', 'campaña de phishing', 'ataque de phishing',
+    'bono', 'premio', 'regalo', 'adelanto', 'comision', 'estafa', 'falso', 'fake',
 )
 
 # Penalizaciones: vulnerabilidades técnicas de producto (CVEs, configuraciones, servidores)
@@ -488,7 +490,7 @@ FOREIGN_FOCUS_TERMS = (
 
 # Umbrales de relevancia
 MIN_RELEVANCE_SCORE = 5  # Puntaje mínimo para aceptar artículo
-MIN_EXTRACTED_MATERIAL = 200  # Mínimo de caracteres en campos extraídos
+MIN_EXTRACTED_MATERIAL = 150  # Mínimo de caracteres en campos extraídos (reducido para capturar alertas cortas)
 
 
 def _fetch_xml(url: str, timeout: int = 5) -> str:
@@ -940,7 +942,7 @@ def _is_paraguay_relevant(*, title: str, content: str, url: str) -> bool:
 
 
 def _has_attack_flow_description(*, title: str, content: str) -> bool:
-    """Validar si describe un FLUJO DE PHISHING PURO. Requiere: tácticas de ingeniería social O flujo explícito."""
+    """Validar si describe un FLUJO DE PHISHING PURO. Más flexible: permite alertas cortas que mencionen tácticas."""
     text = _normalize_for_match(f'{title} {content}')
 
     # Contar evidencia de phishing puro
@@ -972,6 +974,14 @@ def _has_attack_flow_description(*, title: str, content: str) -> bool:
 
     # ✅ CRITERIO 6: Flujo explícito + táctica phishing (incluso sin acciones explícitas)
     if flow_hit and tactics_hit >= 1:
+        return True
+
+    # ✅ CRITERIO 7 (NUEVO - más flexible): ≥2 tácticas phishing solas (ej: bono, premio, falso)
+    if tactics_hit >= 2:
+        return True
+
+    # ✅ CRITERIO 8 (NUEVO): ≥1 táctica phishing + ≥1 acción (alerta + descripción mínima)
+    if tactics_hit >= 1 and action_hits >= 1:
         return True
 
     return False  # No es phishing puro
