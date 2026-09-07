@@ -14,6 +14,11 @@ from urllib.error import URLError  # Excepciones de red
 from urllib.parse import quote_plus, urlparse  # Codificar URLs y extraer componentes
 from urllib.request import Request, urlopen  # Descargar contenido HTTP, esto se encarga de hacer requests HTTP y manejar redirecciones, etc.
 
+try:
+    from openai import OpenAI  # Cliente OpenAI para ChatGPT
+except ImportError:
+    OpenAI = None
+
 from .models import Articulo  # Modelo Django para guardar artículos
 
 logger = logging.getLogger(__name__)  # Logger para registrar eventos de este módulo
@@ -637,6 +642,61 @@ def _extract_list_items_from_html(html: str, marker_text: str, max_items: int = 
         return []  # En caso de error, retorna lista vacía
 
 
+def _extract_attack_context_with_ai(*, content: str) -> dict[str, Any] | None:
+    """Usar ChatGPT para extraer campos de ataque phishing desde el contenido limpio.
+
+    Retorna dict con los 7 campos o None si falla.
+    """
+    if not OpenAI:
+        logger.warning('OpenAI no está disponible, usando extracción por regex')
+        return None
+
+    if not content or len(content) < 100:
+        return None
+
+    try:
+        client = OpenAI()  # Usa OPENAI_API_KEY de entorno
+
+        prompt = f"""Analiza el siguiente artículo sobre phishing y extrae la información en JSON estructurado.
+
+CONTENIDO DEL ARTÍCULO:
+{content[:3000]}
+
+Extrae estos campos en JSON (usa strings vacíos si no encontras información):
+- proceso_ataque: Descripción del proceso/flujo del ataque phishing
+- secuencia_ataque: Pasos secuenciales (primero..., luego..., después...)
+- ejemplos_ataque: Ejemplos concretos de tácticas o mensajes
+- origen_ataque: Quién hace el ataque (atacantes, ciberdelincuentes, etc)
+- objetivo_ataque: A quién va dirigido el ataque (víctimas, usuarios, empresas, etc)
+- canal_ataque: Por qué canal se ejecuta (correo, SMS, WhatsApp, etc)
+- recomendaciones: Recomendaciones para prevenirlo o evitarlo
+
+Responde SOLO con JSON válido, sin markdown ni explicaciones adicionales."""
+
+        response = client.chat.completions.create(
+            model='gpt-4o-mini',  # Rápido y económico
+            messages=[{'role': 'user', 'content': prompt}],
+            temperature=0.3,
+            max_tokens=1000,
+        )
+
+        # Parsear respuesta
+        response_text = response.choices[0].message.content.strip()
+
+        # Si tiene markdown code blocks, extraer JSON
+        if '```json' in response_text:
+            response_text = response_text.split('```json')[1].split('```')[0].strip()
+        elif '```' in response_text:
+            response_text = response_text.split('```')[1].split('```')[0].strip()
+
+        result = json.loads(response_text)
+        return result
+
+    except Exception as e:
+        logger.error('Error en extracción con IA: %s', e)
+        return None
+
+
 def _extract_attack_context(*, title: str, content: str, html: str = '') -> dict[str, str]:
     """Extraer 7 campos estructurados del ataque: proceso, secuencia, recomendaciones, ejemplos, origen, objetivo, canal."""
     # Dividir en oraciones y normalizar para búsqueda
@@ -1160,11 +1220,21 @@ def _scrape_cert_from_search(max_items: int) -> list[dict[str, Any]]:
             # Descargar artículo completo y extraer contexto
             enriched_content, article_html = _enrich_article_content_with_html(url, row['contenido'] or DEFAULT_CONTENT)
 
-            # Construir artículo con todos los campos (extrae contexto CON título completo)
+            # Intentar extracción con IA (ChatGPT)
+            respuesta_ia = _extract_attack_context_with_ai(content=enriched_content)
+
+            # Si IA funciona, usar esos campos; si no, usar extracción por regex
+            if respuesta_ia:
+                campos_extraidos = respuesta_ia
+            else:
+                campos_extraidos = _extract_attack_context(title=row['titulo'], content=enriched_content, html=article_html)
+
+            # Construir artículo con todos los campos
             article = {
                 'titulo': row['titulo'][:255],
                 'contenido': enriched_content[:5000],
-                **_extract_attack_context(title=row['titulo'], content=enriched_content, html=article_html),  # Extrae 7 campos
+                **campos_extraidos,
+                'respuesta_ia': respuesta_ia or {},  # Guardar JSON de IA
                 'fuente': SOURCE_CERT,
                 'url': url,
                 'fecha': parsed_date,
@@ -1373,11 +1443,21 @@ def _normalize_abc_search_item(row: dict[str, Any]) -> dict[str, Any] | None:
     # Descargar artículo completo y enriquecer
     enriched_content, article_html = _enrich_article_content_with_html(link, description or DEFAULT_CONTENT)
 
-    # Construir artículo con todos los campos (extrae contexto CON título completo)
+    # Intentar extracción con IA (ChatGPT)
+    respuesta_ia = _extract_attack_context_with_ai(content=enriched_content)
+
+    # Si IA funciona, usar esos campos; si no, usar extracción por regex
+    if respuesta_ia:
+        campos_extraidos = respuesta_ia
+    else:
+        campos_extraidos = _extract_attack_context(title=title, content=enriched_content, html=article_html)
+
+    # Construir artículo con todos los campos
     normalized = {
         'titulo': title[:255],
         'contenido': enriched_content[:5000],
-        **_extract_attack_context(title=title, content=enriched_content, html=article_html),  # Extrae 7 campos
+        **campos_extraidos,
+        'respuesta_ia': respuesta_ia or {},  # Guardar JSON de IA
         'fuente': SOURCE_ABC,
         'url': link,
         'fecha': parsed_date,

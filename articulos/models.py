@@ -14,6 +14,7 @@ class Articulo(models.Model):
 	fuente = models.CharField(max_length=100)
 	url = models.URLField(unique=True)
 	fecha = models.DateField()
+	respuesta_ia = models.JSONField(default=dict, blank=True, null=True)  # JSON de ChatGPT con extracción de campos
 
 	class Meta:
 		db_table = 'articulo'
