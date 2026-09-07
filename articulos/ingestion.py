@@ -666,7 +666,7 @@ Extrae estos campos en JSON (usa strings vacíos si no encontras información):
 - proceso_ataque: Descripción del proceso/flujo del ataque phishing
 - secuencia_ataque: Pasos secuenciales (primero..., luego..., después...)
 - ejemplos_ataque: Ejemplos concretos de tácticas o mensajes
-- origen_ataque: Quién hace el ataque (atacantes, ciberdelincuentes, etc)
+- origen_ataque: Dónde/qué entidad se origina el ataque (país, organización, región afectada, etc)
 - objetivo_ataque: A quién va dirigido el ataque (víctimas, usuarios, empresas, etc)
 - canal_ataque: Por qué canal se ejecuta (correo, SMS, WhatsApp, etc)
 - recomendaciones: Recomendaciones para prevenirlo o evitarlo
@@ -881,9 +881,9 @@ def _extract_paragraph_text(html: str) -> str:
     cleaned = [item for item in cleaned if item and len(item) > 14]
     # Filtrar párrafos que son puramente boilerplate/promocionales
     cleaned = [item for item in cleaned if not _is_boilerplate_paragraph(item)]
-    # Concatenar, eliminar vacíos, truncar a 5000 caracteres
+    # Concatenar, eliminar vacíos, truncar a 15000 caracteres
     compact = ' '.join(item for item in cleaned if item)
-    return compact[:5000].strip()
+    return compact[:15000].strip()
 
 
 def _enrich_article_content(url: str, fallback: str) -> str:
@@ -1354,6 +1354,7 @@ def _build_article_fields(item: dict[str, Any]) -> dict[str, Any]:
         'origen_ataque': item.get('origen_ataque', ''),
         'objetivo_ataque': item.get('objetivo_ataque', ''),
         'canal_ataque': item.get('canal_ataque', 'indefinido'),
+        'respuesta_ia': item.get('respuesta_ia', {}),  # JSON de ChatGPT (si fue extraído con IA)
         'fuente': item['fuente'],
         'fecha': item['fecha'],
     }
