@@ -75,9 +75,11 @@ def generate_simulations_for_articles(only_missing=True):
                 )
                 
                 # Create simulation record
+                # Use the es_phishing value from AI result (may have been corrected for incoherence)
+                resultado_es_phishing = resultado.get('es_phishing', 'true') == 'true'
                 Simulacion.objects.create(
                     articulo=articulo,
-                    es_phishing=es_phishing,
+                    es_phishing=resultado_es_phishing,
                     simulacion_texto=resultado['simulacion'],
                     tipo_mensaje=resultado.get('tipo_mensaje', 'correo'),
                     sender_email=resultado.get('sender_email', ''),
