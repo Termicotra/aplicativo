@@ -1443,11 +1443,17 @@ def generar_simulacion_y_feedback(
         '  - Attachments: SIEMPRE = []\n'
         '  - Resultado: "correcto" (usuario debe confiar)\n'
         '\n'
+        'FEEDBACK - DEBE SER DIFERENTE SEGUN TIPO:\n'
+        '  PHISHING: Describe SEÑALES FRAUDULENTAS (dominio falso, urgencia, datos, etc)\n'
+        '  LEGITIMO: Describe INDICADORES DE CONFIANZA (dominio oficial, profesional, NO datos)\n'
+        '  NUNCA: Describir caracteristicas phishing para mensaje legitimo (INCOHERENCIA)\n'
+        '\n'
         'VALIDACION - RECHAZA SI:\n'
         '  [FAIL] phishing=true pero NO tiene >=2 senales sospechosas\n'
         '  [FAIL] phishing=false pero tiene adjuntos/credenciales/amenaza/urgencia\n'
         '  [FAIL] Incoherencia dominio-remitente\n'
         '  [FAIL] Generico sin detalles del articulo\n'
+        '  [FAIL] feedback describe phishing pero es_phishing=false (CONTRADICCION)\n'
         '\n'
         'Si rechazas: "simulacion": "ERROR: [razon breve]"\n'
     )
@@ -1733,15 +1739,22 @@ def generar_simulacion_y_feedback(
     feedback_lower = str(feedback).lower()
     es_phishing_bool = result.get('es_phishing') == 'true'
 
-    phishing_keywords = ['phishing', 'fraude', 'falso', 'fake', 'sospechoso', 'malicioso', 'credenciales', 'adjunto']
-    feedback_indicates_phishing = any(kw in feedback_lower for kw in phishing_keywords)
+    # Keywords que indican características FRAUDULENTAS
+    phishing_indicators = ['dominio falso', 'dominio sospechoso', 'remitente falso', 'urgencia',
+                          'amenaza', 'credenciales', 'adjunto', 'fraude', 'malicioso', 'sospechoso']
+    # Keywords que indican características LEGITIMAS
+    legitimate_indicators = ['dominio oficial', 'oficial', 'profesional', 'verificado', 'real',
+                           'legítimo', 'confianza', 'seguro', 'no solicita', 'informar']
 
-    if es_phishing_bool and not feedback_indicates_phishing:
-        # Ajustar: si es_phishing=true pero feedback no lo indica, cambiar a false
+    fraud_count = sum(1 for kw in phishing_indicators if kw in feedback_lower)
+    legitimate_count = sum(1 for kw in legitimate_indicators if kw in feedback_lower)
+
+    # Si es phishing pero feedback habla de legitimidad -> ajustar
+    if es_phishing_bool and legitimate_count > fraud_count:
         result['es_phishing'] = 'false'
         result['resultado'] = 'correcto'
-    elif not es_phishing_bool and feedback_indicates_phishing:
-        # Ajustar: si es_phishing=false pero feedback indica phishing, cambiar a true
+    # Si es legítimo pero feedback habla de fraude -> ajustar
+    elif not es_phishing_bool and fraud_count > legitimate_count:
         result['es_phishing'] = 'true'
         result['resultado'] = 'incorrecto'
 
