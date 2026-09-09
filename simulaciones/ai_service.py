@@ -1413,78 +1413,43 @@ def generar_simulacion_y_feedback(
     )
 
     system_prompt = (
-        'Eres experto generando emails de entrenamiento anti-phishing para Paraguay. '
-        'Responde SOLO JSON válido sin texto extra:
-'
+        'Eres experto generando emails de entrenamiento anti-phishing para Paraguay.\n'
+        'Responde SOLO JSON valido sin texto extra:\n'
         '{"simulacion":"texto","tipo_mensaje":"correo|sms|whatsapp|sitio-web|otro",'
         '"sender_email":"email","subject":"asunto","attachments":[],"es_phishing":true,'
-        '"feedback":"explicacion","resultado":"correcto|incorrecto","resumen_justificacion":"por_que"}
-'
-        '
-'
-        'REGLAS FUNDAMENTALES (APLICAN A AMBOS):
-'
-        '✓ ESPECIFICO: Usa detalles del articulo, NO generico
-'
-        '✓ PARAGUAY: Entidades reales (ANDE, BNA, SET, IPS, Poder Judicial, CERT)
-'
-        '✓ COHERENTE: dominio = remitente = enlace. SIN contradicciones
-'
-        '✓ PLAIN TEXT: SIN Markdown, SIN 
-, SIN HTML entities
-'
-        '✓ FEEDBACK: Explica POR QUE es phishing o legitimo
-'
-        '
-'
-        'PHISHING (es_phishing=true):
-'
-        '  • Dominio FALSO pero similar (bna-py.com.py vs bna.com.py)
-'
-        '  • Sender: dominio falso (seguridad@bna-py.com.py)
-'
-        '  • Objetivo: credenciales, dinero, datos
-'
-        '  • Urgencia artificial: "Ahora!", "Inmediato!", "Cuenta bloqueada"
-'
-        '  • >=2 señales sospechosas: adjunto malicioso, pide datos, amenaza, presion
-'
-        '  • Resultado: "incorrecto" (usuario debe detectar fraude)
-'
-        '
-'
-        'NO-PHISHING (es_phishing=false):
-'
-        '  • Dominio OFICIAL exacto (bna.com.py, no variaciones)
-'
-        '  • Sender: email oficial (contacto@bna.com.py)
-'
-        '  • Objetivo: informar, confirmar tramite, educar
-'
-        '  • NUNCA: adjuntos, pide credenciales, amenazas, presion, datos sensibles
-'
-        '  • Tono: profesional, sin urgencia
-'
-        '  • Attachments: SIEMPRE = []
-'
-        '  • Resultado: "correcto" (usuario debe confiar)
-'
-        '
-'
-        'VALIDACIoN - RECHAZA SI:
-'
-        '  ❌ phishing=true pero NO tiene >=2 señales sospechosas
-'
-        '  ❌ phishing=false pero tiene adjuntos/credenciales/amenaza/urgencia
-'
-        '  ❌ Incoherencia dominio-remitente
-'
-        '  ❌ Generico sin detalles del articulo
-'
-        '
-'
-        'Si rechazas: "simulacion": "ERROR: [razon breve]"
-'
+        '"feedback":"explicacion","resultado":"correcto|incorrecto","resumen_justificacion":"por_que"}\n'
+        '\n'
+        'REGLAS FUNDAMENTALES (APLICAN A AMBOS):\n'
+        '[OK] ESPECIFICO: Usa detalles del articulo, NO generico\n'
+        '[OK] PARAGUAY: Entidades reales (ANDE, BNA, SET, IPS, Poder Judicial, CERT)\n'
+        '[OK] COHERENTE: dominio = remitente = enlace. SIN contradicciones\n'
+        '[OK] PLAIN TEXT: SIN Markdown, SIN secuencias escapadas, SIN HTML entities\n'
+        '[OK] FEEDBACK: Explica POR QUE es phishing o legitimo\n'
+        '\n'
+        'PHISHING (es_phishing=true):\n'
+        '  - Dominio FALSO pero similar (bna-py.com.py vs bna.com.py)\n'
+        '  - Sender: dominio falso (seguridad@bna-py.com.py)\n'
+        '  - Objetivo: credenciales, dinero, datos\n'
+        '  - Urgencia artificial: "Ahora!", "Inmediato!", "Cuenta bloqueada"\n'
+        '  - >=2 senales sospechosas: adjunto malicioso, pide datos, amenaza, presion\n'
+        '  - Resultado: "incorrecto" (usuario debe detectar fraude)\n'
+        '\n'
+        'NO-PHISHING (es_phishing=false):\n'
+        '  - Dominio OFICIAL exacto (bna.com.py, no variaciones)\n'
+        '  - Sender: email oficial (contacto@bna.com.py)\n'
+        '  - Objetivo: informar, confirmar tramite, educar\n'
+        '  - NUNCA: adjuntos, pide credenciales, amenazas, presion, datos sensibles\n'
+        '  - Tono: profesional, sin urgencia\n'
+        '  - Attachments: SIEMPRE = []\n'
+        '  - Resultado: "correcto" (usuario debe confiar)\n'
+        '\n'
+        'VALIDACION - RECHAZA SI:\n'
+        '  [FAIL] phishing=true pero NO tiene >=2 senales sospechosas\n'
+        '  [FAIL] phishing=false pero tiene adjuntos/credenciales/amenaza/urgencia\n'
+        '  [FAIL] Incoherencia dominio-remitente\n'
+        '  [FAIL] Generico sin detalles del articulo\n'
+        '\n'
+        'Si rechazas: "simulacion": "ERROR: [razon breve]"\n'
     )
 
     # Seleccionar entidad aleatoria para adjuntos/HTML SOLO si:
@@ -1763,6 +1728,22 @@ def generar_simulacion_y_feedback(
         'resultado': resultado,
         'resumen_justificacion': resumen_justificacion,
     }
+
+    # VALIDACION CRUZADA: Verificar coherencia feedback vs es_phishing
+    feedback_lower = str(feedback).lower()
+    es_phishing_bool = result.get('es_phishing') == 'true'
+
+    phishing_keywords = ['phishing', 'fraude', 'falso', 'fake', 'sospechoso', 'malicioso', 'credenciales', 'adjunto']
+    feedback_indicates_phishing = any(kw in feedback_lower for kw in phishing_keywords)
+
+    if es_phishing_bool and not feedback_indicates_phishing:
+        # Ajustar: si es_phishing=true pero feedback no lo indica, cambiar a false
+        result['es_phishing'] = 'false'
+        result['resultado'] = 'correcto'
+    elif not es_phishing_bool and feedback_indicates_phishing:
+        # Ajustar: si es_phishing=false pero feedback indica phishing, cambiar a true
+        result['es_phishing'] = 'true'
+        result['resultado'] = 'incorrecto'
 
     def _is_valid_alignment(res: dict[str, Any]) -> bool:
         sender = str(res.get('sender_email', '')).lower()
