@@ -1447,10 +1447,14 @@ def generar_simulacion_y_feedback(
         '  - Attachments: SIEMPRE = []\n'
         '  - Resultado: "correcto" (usuario debe confiar)\n'
         '\n'
-        'FEEDBACK - DEBE SER DIFERENTE SEGUN TIPO:\n'
-        '  PHISHING: Describe SEÑALES FRAUDULENTAS (dominio falso, urgencia, datos, etc)\n'
-        '  LEGITIMO: Describe INDICADORES DE CONFIANZA (dominio oficial, profesional, NO datos)\n'
-        '  NUNCA: Describir caracteristicas phishing para mensaje legitimo (INCOHERENCIA)\n'
+        'FEEDBACK - DEBE SER 100% DIFERENTE SEGUN TIPO:\n'
+        '  PHISHING: Describe SOLO señales FRAUDULENTAS\n'
+        '    - "dominio falso", "urgencia artificial", "amenaza", "solicita credenciales"\n'
+        '    - "se asemeja al oficial", "técnica común de phishing", "intento de robo"\n'
+        '  LEGITIMO: Describe SOLO indicadores LEGITIMOS y NUNCA mencionar phishing\n'
+        '    - "dominio oficial exacto", "profesional", "no solicita datos", "informativo"\n'
+        '    - PROHIBIDO: NUNCA DESCRIBIR "dominio falso", "urgencia", "amenaza" para legítimo\n'
+        '    - Si feedback describe phishing -> es_phishing=true automáticamente\n'
         '\n'
         'VALIDACION - RECHAZA SI:\n'
         '  [FAIL] phishing=true pero NO tiene >=2 senales sospechosas\n'
@@ -1845,6 +1849,30 @@ def generar_simulacion_y_feedback(
 
     # Final safety: remove any accidental 'Para:' lines from the simulation body
     result['simulacion'] = _sanitize_simulation_text(result.get('simulacion', ''), result.get('enlace_senuelo', ''))
+
+    # AGGRESSIVE CROSS-VALIDATION: If feedback describes phishing but es_phishing=false, fix it
+    is_phishing_marked = _coerce_bool(result.get('es_phishing', 'true') == 'true', default=True)
+    feedback_text = str(result.get('feedback', '')).lower()
+
+    # Fraud/phishing keywords that should NEVER appear in legitimate feedback
+    fraud_keywords = [
+        'dominio falso', 'false domain', 'fake domain',
+        'urgencia artificial', 'artificial urgency',
+        'amenaza', 'threat', 'amenazante',
+        'phishing', 'estafa', 'fraud', 'fraude',
+        'robo', 'theft', 'steal',
+        'suplanta', 'suplantación', 'impersonat',
+        'intento de robo', 'intento de estafa',
+        'credenciales', 'credentials', 'contraseña', 'password',
+        'solicita datos', 'requests data',
+        'presión', 'pressure', 'presion',
+    ]
+
+    fraud_count = sum(1 for kw in fraud_keywords if kw in feedback_text)
+
+    # If legitimate but has fraud keywords -> swap to phishing
+    if not is_phishing_marked and fraud_count > 0:
+        result['es_phishing'] = 'true'
 
     # Registrar interacción en la base de datos si es posible, evitando duplicados.
     try:
