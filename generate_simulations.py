@@ -37,7 +37,7 @@ def generate_simulations_for_articles(only_missing=True):
         
         # Skip if already has simulations
         if not only_missing and Simulacion.objects.filter(articulo=articulo).exists():
-            print(f"  ⊘ Saltado (ya tiene simulaciones)")
+            print(f"  [SKIP] Saltado (ya tiene simulaciones)")
             total_skipped += 1
             continue
         
@@ -91,12 +91,12 @@ def generate_simulations_for_articles(only_missing=True):
                     tipo_generacion='inicial',
                 )
                 
-                print("✓", end=" ")
+                print("[OK]", end=" ")
                 total_generated += 1
                 
             except Exception as e:
                 error_msg = str(e)[:80]
-                print(f"✗ ({error_msg})")
+                print(f"[FAIL] ({error_msg})")
                 total_errors += 1
                 # Continue to next type instead of failing completely
     

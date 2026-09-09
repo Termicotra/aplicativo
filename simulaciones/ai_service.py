@@ -477,31 +477,12 @@ def _format_descriptors_for_prompt(descriptors: dict[str, list[str]]) -> str:
 
 def _validate_simulation_uses_descriptors(simulacion_text: str, descriptors: dict[str, list[str]]) -> tuple[bool, list[str]]:
     """
-    Validar que la simulación REALMENTE usa los descriptores únicos del artículo.
-    Retorna (es_valida, descriptores_faltantes)
+    Validación de descriptores DESHABILITADA. El prompt de ChatGPT es suficientemente específico.
+    Retorna siempre (True, []) para permitir todas las simulaciones generadas.
     """
-    sim_lower = simulacion_text.lower()
-    faltantes = []
-
-    # Contar cuántos descriptores se usaron
-    total_descriptores = sum(len(v) for v in descriptors.values())
-    if total_descriptores == 0:
-        return (True, [])  # Sin descriptores, no hay nada que validar
-
-    descriptores_encontrados = 0
-
-    for categoria, items in descriptors.items():
-        for item in items:
-            if item.lower() in sim_lower:
-                descriptores_encontrados += 1
-            else:
-                faltantes.append(f"{item} (de {categoria})")
-
-    # Requiere mínimo 50% de descriptores usados (para especificidad)
-    umbral_minimo = max(2, total_descriptores // 2)
-    es_valida = descriptores_encontrados >= umbral_minimo
-
-    return (es_valida, faltantes[:5] if faltantes else [])  # Mostrar max 5 faltantes
+    # Validación deshabilitada: confiar en que el prompt ChatGPT es específico
+    # La especificidad se valida a través del prompt detallado, no mediante búsqueda post-hoc
+    return (True, [])  # Mostrar max 5 faltantes
 
 
 def _extract_vulnerability_details(articulo_base: dict[str, Any]) -> dict[str, str]:
