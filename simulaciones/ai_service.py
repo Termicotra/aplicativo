@@ -1227,26 +1227,30 @@ def _generate_dynamic_sender(target_host: str, entity_name: str) -> str:
 
 def _normalize_sender_email(sender_email: str, target_host: str, entity_name: str, es_phishing: bool = True, correo_oficial: str = '') -> str:
     cleaned = sender_email.strip().lower()
-    
+
     # Si NO es phishing y hay correo oficial, usarlo directamente
     if not es_phishing and correo_oficial:
         return correo_oficial.lower()
-    
+
+    # Si NO es phishing y NO hay correo oficial, retornar vacío (mejor que inventar)
+    if not es_phishing and not correo_oficial:
+        return ''
+
     # Extract domain if email format is present.
     if '@' in cleaned:
         domain = cleaned.split('@', 1)[1].strip()
         # Reject if domain is a known source provider OR if email hints at provider names.
         if domain in SOURCE_PROVIDER_HOSTS or any(hint in cleaned for hint in PROVIDER_NAME_HINTS):
             cleaned = ''
-    
+
     # Additional check: reject emails containing provider name hints anywhere.
     if cleaned and any(hint in cleaned for hint in {'cert', 'abc.com', 'abc.com.py'}):
         cleaned = ''
-    
+
     if cleaned:
         return cleaned
 
-    # Generate dynamic sender based on entity and target
+    # Para phishing: generar remitente falso. Para legítimo: ya retornamos vacío arriba
     return _generate_dynamic_sender(target_host, entity_name)
 
 
@@ -1735,28 +1739,29 @@ def generar_simulacion_y_feedback(
         'resumen_justificacion': resumen_justificacion,
     }
 
-    # VALIDACION CRUZADA: Verificar coherencia feedback vs es_phishing
+    # VALIDACION CRUZADA: Verificar coherencia feedback vs es_phishing (AGRESIVA)
     feedback_lower = str(feedback).lower()
     es_phishing_bool = result.get('es_phishing') == 'true'
 
     # Keywords que indican características FRAUDULENTAS
     phishing_indicators = ['dominio falso', 'dominio sospechoso', 'remitente falso', 'urgencia',
-                          'amenaza', 'credenciales', 'adjunto', 'fraude', 'malicioso', 'sospechoso']
+                          'amenaza', 'credenciales', 'adjunto', 'fraude', 'malicioso', 'sospechoso',
+                          'phishing', 'fake', 'falso', 'engano', 'estafa']
     # Keywords que indican características LEGITIMAS
-    legitimate_indicators = ['dominio oficial', 'oficial', 'profesional', 'verificado', 'real',
-                           'legítimo', 'confianza', 'seguro', 'no solicita', 'informar']
+    legitimate_indicators = ['dominio oficial', 'oficial exacto', 'profesional', 'verificado', 'real',
+                           'legítimo', 'confianza', 'seguro', 'no solicita', 'informar', 'educación']
 
     fraud_count = sum(1 for kw in phishing_indicators if kw in feedback_lower)
     legitimate_count = sum(1 for kw in legitimate_indicators if kw in feedback_lower)
 
-    # Si es phishing pero feedback habla de legitimidad -> ajustar
-    if es_phishing_bool and legitimate_count > fraud_count:
-        result['es_phishing'] = 'false'
-        result['resultado'] = 'correcto'
-    # Si es legítimo pero feedback habla de fraude -> ajustar
-    elif not es_phishing_bool and fraud_count > legitimate_count:
+    # AGRESIVO: Si es legítimo pero CUALQUIER fraude keyword aparece -> cambiar a phishing
+    if not es_phishing_bool and fraud_count > 0:
         result['es_phishing'] = 'true'
         result['resultado'] = 'incorrecto'
+    # Si es phishing pero SOLO tiene keywords legítimas -> cambiar a legítimo
+    elif es_phishing_bool and fraud_count == 0 and legitimate_count > 0:
+        result['es_phishing'] = 'false'
+        result['resultado'] = 'correcto'
 
     def _is_valid_alignment(res: dict[str, Any]) -> bool:
         sender = str(res.get('sender_email', '')).lower()
