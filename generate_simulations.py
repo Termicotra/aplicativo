@@ -27,6 +27,7 @@ def is_inherently_phishing(articulo):
         'dinero': ['dinero', 'premio', 'regalo', 'ganaste', 'heredaste', 'bono', 'reembolso', 'comisión', 'adelanto'],
         'credenciales_en_email': ['enviar contraseña', 'confirmar contraseña', 'verificar usuario y contraseña'],
         'datos_tarjeta': ['número de tarjeta', 'cvv', 'pin de tarjeta'],
+        'adjunto_malicioso': ['adjunto malicioso', 'archivo malicioso', 'adjunto con malware'],
     }
 
     for category, keywords in phishing_keywords.items():
@@ -105,6 +106,13 @@ def generate_simulations_for_articles(only_missing=True):
                     recipient_email=None,
                 )
                 
+                # Validate simulation content
+                simulacion_text = resultado.get('simulacion', '')
+                if 'ERROR:' in simulacion_text or 'error' in simulacion_text.lower()[:50]:
+                    print(f"[FAIL] Simulación contiene ERROR, rechazada")
+                    total_errors += 1
+                    continue
+
                 # Create simulation record
                 # Use the es_phishing value from AI result (may have been corrected for incoherence)
                 resultado_es_phishing = resultado.get('es_phishing', 'true') == 'true'
