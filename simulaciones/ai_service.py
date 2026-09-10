@@ -1743,30 +1743,7 @@ def generar_simulacion_y_feedback(
         'resumen_justificacion': resumen_justificacion,
     }
 
-    # VALIDACION CRUZADA: Verificar coherencia feedback vs es_phishing (AGRESIVA)
-    feedback_lower = str(feedback).lower()
-    es_phishing_bool = result.get('es_phishing') == 'true'
-
-    # Keywords que indican características FRAUDULENTAS
-    phishing_indicators = ['dominio falso', 'dominio sospechoso', 'remitente falso', 'urgencia',
-                          'amenaza', 'credenciales', 'adjunto', 'fraude', 'malicioso', 'sospechoso',
-                          'phishing', 'fake', 'falso', 'engano', 'estafa']
-    # Keywords que indican características LEGITIMAS
-    legitimate_indicators = ['dominio oficial', 'oficial exacto', 'profesional', 'verificado', 'real',
-                           'legítimo', 'confianza', 'seguro', 'no solicita', 'informar', 'educación']
-
-    fraud_count = sum(1 for kw in phishing_indicators if kw in feedback_lower)
-    legitimate_count = sum(1 for kw in legitimate_indicators if kw in feedback_lower)
-
-    # AGRESIVO: Si es legítimo pero CUALQUIER fraude keyword aparece -> cambiar a phishing
-    if not es_phishing_bool and fraud_count > 0:
-        result['es_phishing'] = 'true'
-        result['resultado'] = 'incorrecto'
-    # Si es phishing pero SOLO tiene keywords legítimas -> cambiar a legítimo
-    elif es_phishing_bool and fraud_count == 0 and legitimate_count > 0:
-        result['es_phishing'] = 'false'
-        result['resultado'] = 'correcto'
-
+    # Trust ChatGPT output - no aggressive post-hoc validation
     def _is_valid_alignment(res: dict[str, Any]) -> bool:
         sender = str(res.get('sender_email', '')).lower()
         enlace = str(res.get('enlace_senuelo', '')).strip()
