@@ -1750,7 +1750,23 @@ def generar_simulacion_y_feedback(
         'resumen_justificacion': resumen_justificacion,
     }
 
-    # Trust ChatGPT output - no aggressive post-hoc validation
+    # POST-GENERATION COHERENCE FIX: Rewrite legitimate feedback if it mentions phishing
+    # This is a last-resort fix because ChatGPT struggles to NOT analyze attacks
+    if result.get('es_phishing') == 'false':
+        feedback_lower = str(result.get('feedback', '')).lower()
+        fraud_keywords = ['dominio falso', 'phishing', 'estafa', 'fraude', 'urgencia artificial',
+                         'amenaza', 'suplanta', 'robo', 'credenciales', 'solicita datos']
+        has_fraud_kw = any(kw in feedback_lower for kw in fraud_keywords)
+
+        if has_fraud_kw:
+            # Rewrite to positive legitimacy feedback
+            entity_name = str(entidad_nombre).split()[0] if entidad_nombre else 'la entidad'
+            result['feedback'] = (
+                f"Remitente oficial de {entity_name} usando dominio verificado. "
+                f"Mensaje informativo sin solicitudes urgentes de datos o acciones. "
+                f"Comunicación profesional y confiable."
+            )
+
     def _is_valid_alignment(res: dict[str, Any]) -> bool:
         sender = str(res.get('sender_email', '')).lower()
         enlace = str(res.get('enlace_senuelo', '')).strip()
