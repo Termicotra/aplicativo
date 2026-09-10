@@ -1850,31 +1850,9 @@ def generar_simulacion_y_feedback(
     # Final safety: remove any accidental 'Para:' lines from the simulation body
     result['simulacion'] = _sanitize_simulation_text(result.get('simulacion', ''), result.get('enlace_senuelo', ''))
 
-    # COHERENCE CHECK: If feedback clearly describes attack execution but es_phishing=false, fix it
-    is_phishing_marked = _coerce_bool(result.get('es_phishing', 'true') == 'true', default=True)
-    feedback_text = str(result.get('feedback', '')).lower()
-
-    # Only swap if feedback describes ATTACK EXECUTION HAPPENING, not just analysis of techniques
-    # These phrases indicate the attack is being performed in THIS message:
-    active_attack_phrases = [
-        'dominio falso',  # the domain in THIS message is fake
-        'se solicita',     # THIS message is asking for
-        'solicita credenciales',  # THIS message is asking for credentials
-        'solicita datos',  # THIS message is asking for data
-        'contiene un archivo',  # THIS message has a malicious file
-        'se asemeja al oficial',  # THIS message looks like official
-        'intento de phishing',  # THIS message is a phishing attempt
-        'intento de suplantación',  # THIS message is impersonation
-        'técnica de phishing',  # describes THIS message as phishing technique
-        'robo de credenciales',  # THIS message trying to steal credentials
-        'presión para que',  # THIS message pressuring you to do something
-    ]
-
-    active_attack_count = sum(1 for phrase in active_attack_phrases if phrase in feedback_text)
-
-    # Only swap if we have STRONG EVIDENCE of active attack in this message
-    if not is_phishing_marked and active_attack_count >= 2:
-        result['es_phishing'] = 'true'
+    # Trust the ChatGPT prompt to generate coherent feedback
+    # The explicit FEEDBACK rules in the prompt should prevent incoherence
+    # No aggressive validation - rely on better prompting instead
 
     # Registrar interacción en la base de datos si es posible, evitando duplicados.
     try:
