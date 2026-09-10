@@ -28,6 +28,7 @@ def is_inherently_phishing(articulo):
         'credenciales_en_email': ['enviar contraseña', 'confirmar contraseña', 'verificar usuario y contraseña'],
         'datos_tarjeta': ['número de tarjeta', 'cvv', 'pin de tarjeta'],
         'adjunto_malicioso': ['adjunto malicioso', 'archivo malicioso', 'adjunto con malware'],
+        'bloqueo_via_email': ['bloqueo de cuenta', 'cuenta bloqueada', 'haz clic para desbloquear', 'verifica tu cuenta'],
     }
 
     for category, keywords in phishing_keywords.items():
