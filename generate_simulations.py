@@ -14,6 +14,29 @@ from simulaciones.models import Simulacion
 from simulaciones.ai_service import generar_simulacion_y_feedback
 
 
+def is_inherently_phishing(articulo):
+    """
+    Detect if attack described is inherently phishing (no legitimate version possible).
+
+    Returns (is_inherent, reason)
+    """
+    content_lower = (articulo.contenido + articulo.titulo).lower()
+
+    # Palabras clave que indican ataque inherentemente phishing (sin versión legítima posible)
+    phishing_keywords = {
+        'dinero': ['dinero', 'premio', 'regalo', 'ganaste', 'heredaste', 'bono', 'reembolso', 'comisión', 'adelanto'],
+        'credenciales_en_email': ['enviar contraseña', 'confirmar contraseña', 'verificar usuario y contraseña'],
+        'datos_tarjeta': ['número de tarjeta', 'cvv', 'pin de tarjeta'],
+    }
+
+    for category, keywords in phishing_keywords.items():
+        for keyword in keywords:
+            if keyword in content_lower:
+                return True, f"Detectado: {category} ({keyword})"
+
+    return False, None
+
+
 def generate_simulations_for_articles(only_missing=True):
     """
     Generate 2 simulations per article: one phishing, one legitimate.
@@ -41,8 +64,16 @@ def generate_simulations_for_articles(only_missing=True):
             total_skipped += 1
             continue
         
+        # Check if attack is inherently phishing
+        is_inherent, reason = is_inherently_phishing(articulo)
+        if is_inherent:
+            print(f"  [{reason}] - Solo phishing")
+            tipos_a_generar = [True]  # Only phishing
+        else:
+            tipos_a_generar = [True, False]  # Both phishing and legitimate
+
         # For each phishing type
-        for es_phishing in [True, False]:
+        for es_phishing in tipos_a_generar:
             phishing_type = "PHISHING" if es_phishing else "LEGÍTIMO"
             print(f"    {phishing_type}...", end=" ", flush=True)
             
