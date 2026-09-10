@@ -1755,7 +1755,9 @@ def generar_simulacion_y_feedback(
     if result.get('es_phishing') == 'false':
         feedback_lower = str(result.get('feedback', '')).lower()
         fraud_keywords = ['dominio falso', 'phishing', 'estafa', 'fraude', 'urgencia artificial',
-                         'amenaza', 'suplanta', 'robo', 'credenciales', 'solicita datos']
+                         'amenaza', 'suplanta', 'robo', 'credenciales', 'solicita datos',
+                         'malicioso', 'enlace malicioso', 'dominio falso', 'página maliciosa',
+                         'intento de', 'falso', 'falsa', 'simula', 'se asemeja']
         has_fraud_kw = any(kw in feedback_lower for kw in fraud_keywords)
 
         if has_fraud_kw:
