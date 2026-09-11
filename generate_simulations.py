@@ -161,6 +161,15 @@ def generate_simulations_for_articles(only_missing=True):
                     total_errors += 1
                     continue
 
+                # Validate: legitimate emails should NOT mention attachments/files
+                if not es_phishing:
+                    text_lower = simulacion_text.lower()
+                    attachment_keywords = ['adjunto', 'archivo', '.pdf', '.doc', '.zip', 'descargar', 'descargue', 'documento que']
+                    if any(kw in text_lower for kw in attachment_keywords):
+                        print(f"[FAIL] Simulacion legitima menciona adjuntos, rechazada")
+                        total_errors += 1
+                        continue
+
                 # Validate entity is real Paraguayan organization
                 entidad = str(resultado.get('entidad_objetivo', '')).upper()
                 validated_keywords = list(ENTIDADES_REALES_PARAGUAY.keys())
