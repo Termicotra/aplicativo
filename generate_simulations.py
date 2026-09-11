@@ -16,6 +16,7 @@ from simulaciones.ai_service import generar_simulacion_y_feedback
 # Entidades reales de Paraguay validadas
 ENTIDADES_REALES_PARAGUAY = {
     # Bancos locales
+    'BNA': 'Banco Nacional de Argentina',  # Also operates in Paraguay
     'ITAU': 'Banco Itaú',
     'SUDAMERIS': 'Banco Sudameris',
     'GNB': 'Banco GNB',
