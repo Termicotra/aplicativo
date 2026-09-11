@@ -28,13 +28,21 @@ def is_inherently_phishing(articulo):
         'credenciales_en_email': ['enviar contraseña', 'confirmar contraseña', 'verificar usuario y contraseña'],
         'datos_tarjeta': ['número de tarjeta', 'cvv', 'pin de tarjeta'],
         'adjunto_malicioso': ['adjunto malicioso', 'archivo malicioso', 'adjunto con malware'],
-        'bloqueo_via_email': ['bloqueo de cuenta', 'cuenta bloqueada', 'haz clic para desbloquear', 'verifica tu cuenta'],
+        'bloqueo_via_email': ['bloqueo de cuenta', 'cuenta bloqueada', 'será bloqueada', 'cuenta será bloqueada',
+                             'haz clic para desbloquear', 'verifica tu cuenta', 'compromet', 'amenaza de bloqueo'],
     }
 
     for category, keywords in phishing_keywords.items():
         for keyword in keywords:
             if keyword in content_lower:
                 return True, f"Detectado: {category} ({keyword})"
+
+    # Additional patterns: urgency + credential request = phishing
+    if 'inmediato' in content_lower and ('confirme' in content_lower or 'verifique' in content_lower or 'identidad' in content_lower):
+        return True, "Detectado: Urgencia + solicitud de identidad"
+
+    if 'si no' in content_lower and 'será' in content_lower and ('bloqueada' in content_lower or 'cancelada' in content_lower):
+        return True, "Detectado: Amenaza condicional (si no, será...)"
 
     return False, None
 
