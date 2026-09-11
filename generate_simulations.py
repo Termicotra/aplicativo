@@ -13,6 +13,27 @@ from articulos.models import Articulo
 from simulaciones.models import Simulacion
 from simulaciones.ai_service import generar_simulacion_y_feedback
 
+# Entidades reales de Paraguay validadas
+ENTIDADES_REALES_PARAGUAY = {
+    'BCP': 'Banco Central del Paraguay',
+    'BNF': 'Banco Nacional de Fomento',
+    'ITAU': 'Banco Itaú Paraguay',
+    'SANTANDER': 'Banco Santander Paraguay',
+    'GNP': 'Banco GNP',
+    'VISION': 'Banco Visión',
+    'REGIONAL': 'Banco Regional',
+    'JPMORGAN': 'JP Morgan Chase Bank',
+    'CITIBANK': 'Citibank Paraguay',
+    'IPS': 'Instituto de Previsión Social',
+    'COPACO': 'Compañía Paraguaya de Comunicaciones',
+    'ANDE': 'Administración Nacional de Electricidad',
+    'ESSAP': 'Empresa de Servicios Sanitarios del Paraguay',
+    'SET': 'Secretaría de Impuestos',
+    'PODER JUDICIAL': 'Poder Judicial de la República',
+    'CERT': 'CERT.py - Centro de Respuesta a Emergencias Telemáticas',
+    'MUNICIPALIDAD': 'Municipalidades',
+}
+
 
 def is_inherently_phishing(articulo):
     """
