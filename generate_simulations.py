@@ -154,6 +154,12 @@ def generate_simulations_for_articles(only_missing=True):
                     total_errors += 1
                     continue
 
+                # Validate minimum content length (email must have body)
+                if len(simulacion_text.strip()) < 100:
+                    print(f"[FAIL] Contenido demasiado corto ({len(simulacion_text)} chars), rechazada")
+                    total_errors += 1
+                    continue
+
                 # Validate entity is real Paraguayan organization
                 entidad = str(resultado.get('entidad_objetivo', '')).upper()
                 validated_keywords = list(ENTIDADES_REALES_PARAGUAY.keys())
