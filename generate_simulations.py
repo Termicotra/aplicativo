@@ -15,22 +15,34 @@ from simulaciones.ai_service import generar_simulacion_y_feedback
 
 # Entidades reales de Paraguay validadas
 ENTIDADES_REALES_PARAGUAY = {
-    'BCP': 'Banco Central del Paraguay',
+    # Bancos locales
+    'ITAU': 'Banco Itaú',
+    'SUDAMERIS': 'Banco Sudameris',
+    'GNB': 'Banco GNB',
+    'BASA': 'Banco Basa',
+    'CONTINENTAL': 'Banco Continental',
+    'FAMILIAR': 'Banco Familiar',
+    'ATLAS': 'Banco Atlas',
+    'BANCOP': 'Bancop',
+    'INTERFISA': 'Interfisa',
+    'SOLAR': 'Banco Solar',
+    'UENO': 'Banco Ueno',
+    'ZETA': 'Banco Zeta',
     'BNF': 'Banco Nacional de Fomento',
-    'ITAU': 'Banco Itaú Paraguay',
-    'SANTANDER': 'Banco Santander Paraguay',
-    'GNP': 'Banco GNP',
-    'VISION': 'Banco Visión',
-    'REGIONAL': 'Banco Regional',
-    'CITIBANK': 'Citibank Paraguay',
+    'BCP': 'Banco Central del Paraguay',
+    # Bancos extranjeros
+    'CITIBANK': 'Citibank',
+    'BANCO DO BRASIL': 'Banco do Brasil',
+    'BANCO NACION': 'Banco Nación Argentina',
+    # Gobierno y servicios
     'IPS': 'Instituto de Previsión Social',
-    'COPACO': 'Compañía Paraguaya de Comunicaciones',
-    'ANDE': 'Administración Nacional de Electricidad',
-    'ESSAP': 'Empresa de Servicios Sanitarios del Paraguay',
     'SET': 'Secretaría de Impuestos',
-    'PODER JUDICIAL': 'Poder Judicial de la República',
-    'MUNICIPALIDAD': 'Municipalidades',
+    'ANDE': 'Administración Nacional de Electricidad',
+    'ESSAP': 'Empresa de Servicios Sanitarios',
+    'PODER JUDICIAL': 'Poder Judicial',
+    'COPACO': 'COPACO',
     'CERT': 'CERT.py',
+    'MUNICIPALIDAD': 'Municipalidades',
 }
 
 
