@@ -22,7 +22,6 @@ ENTIDADES_REALES_PARAGUAY = {
     'GNP': 'Banco GNP',
     'VISION': 'Banco Visión',
     'REGIONAL': 'Banco Regional',
-    'JPMORGAN': 'JP Morgan Chase Bank',
     'CITIBANK': 'Citibank Paraguay',
     'IPS': 'Instituto de Previsión Social',
     'COPACO': 'Compañía Paraguaya de Comunicaciones',
@@ -30,8 +29,8 @@ ENTIDADES_REALES_PARAGUAY = {
     'ESSAP': 'Empresa de Servicios Sanitarios del Paraguay',
     'SET': 'Secretaría de Impuestos',
     'PODER JUDICIAL': 'Poder Judicial de la República',
-    'CERT': 'CERT.py - Centro de Respuesta a Emergencias Telemáticas',
     'MUNICIPALIDAD': 'Municipalidades',
+    'CERT': 'CERT.py',
 }
 
 
@@ -140,6 +139,14 @@ def generate_simulations_for_articles(only_missing=True):
                 simulacion_text = resultado.get('simulacion', '')
                 if 'ERROR:' in simulacion_text or 'error' in simulacion_text.lower()[:50]:
                     print(f"[FAIL] Simulación contiene ERROR, rechazada")
+                    total_errors += 1
+                    continue
+
+                # Validate entity is real Paraguayan organization
+                entidad = str(resultado.get('entidad_objetivo', '')).upper()
+                validated_keywords = list(ENTIDADES_REALES_PARAGUAY.keys())
+                if not any(kw in entidad for kw in validated_keywords):
+                    print(f"[FAIL] Entidad no validada: {entidad}")
                     total_errors += 1
                     continue
 
