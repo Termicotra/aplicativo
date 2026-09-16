@@ -39,6 +39,7 @@ class Simulacion(models.Model):
     enlace_senuelo = models.TextField(default='')
     entidad_objetivo = models.CharField(max_length=255, default='')
     dominio_objetivo = models.CharField(max_length=255, default='')
+    nombre_contacto = models.CharField(max_length=255, default='', help_text='Para WhatsApp/SMS: nombre del contacto que envía')
     resumen_justificacion = models.TextField(default='')
     resultado = models.CharField(max_length=20, choices=RESULTADO_CHOICES, default='sin-responder')
     feedback = models.TextField(default='')

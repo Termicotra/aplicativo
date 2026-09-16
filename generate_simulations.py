@@ -16,7 +16,6 @@ from simulaciones.ai_service import generar_simulacion_y_feedback
 # Entidades reales de Paraguay validadas
 ENTIDADES_REALES_PARAGUAY = {
     # Bancos locales
-    'BNA': 'Banco Nacional de Argentina',  # Also operates in Paraguay
     'ITAU': 'Banco Itaú',
     'SUDAMERIS': 'Banco Sudameris',
     'GNB': 'Banco GNB',
@@ -34,7 +33,6 @@ ENTIDADES_REALES_PARAGUAY = {
     # Bancos extranjeros
     'CITIBANK': 'Citibank',
     'BANCO DO BRASIL': 'Banco do Brasil',
-    'BANCO NACION': 'Banco Nación Argentina',
     # Gobierno y servicios
     'IPS': 'Instituto de Previsión Social',
     'SET': 'Secretaría de Impuestos',
@@ -44,6 +42,11 @@ ENTIDADES_REALES_PARAGUAY = {
     'COPACO': 'COPACO',
     'CERT': 'CERT.py',
     'MUNICIPALIDAD': 'Municipalidades',
+    'MTESS': 'Ministerio de Trabajo, Empleo y Seguridad Social',
+    'MOPC': 'Ministerio de Obras Públicas y Comunicaciones',
+    'STP': 'Secretaría Técnica de Planificación',
+    'SEAM': 'Secretaría del Ambiente',
+    'DINAC': 'Dirección Nacional de Aeronáutica Civil',
 }
 
 
@@ -56,8 +59,9 @@ def is_inherently_phishing(articulo):
     content_lower = (articulo.contenido + articulo.titulo).lower()
 
     # Palabras clave que indican ataque inherentemente phishing (sin versión legítima posible)
+    # Solo MÁS específicas: credenciales, datos tarjeta, adjuntos maliciosos, bloqueos
+    # Removido "dinero" porque bancos PUEDEN tener mensajes legítimos sobre bonificaciones/reembolsos
     phishing_keywords = {
-        'dinero': ['dinero', 'premio', 'regalo', 'ganaste', 'heredaste', 'bono', 'reembolso', 'comisión', 'adelanto'],
         'credenciales_en_email': ['enviar contraseña', 'confirmar contraseña', 'verificar usuario y contraseña'],
         'datos_tarjeta': ['número de tarjeta', 'cvv', 'pin de tarjeta'],
         'adjunto_malicioso': ['adjunto malicioso', 'archivo malicioso', 'adjunto con malware'],
@@ -170,8 +174,62 @@ def generate_simulations_for_articles(only_missing=True):
                         total_errors += 1
                         continue
 
+                # Validate: legitimate emails should NOT contain threat/urgency language
+                if not es_phishing:
+                    text_lower = simulacion_text.lower()
+                    threat_keywords = ['será bloqueado', 'será bloqueada', 'bloqueo de cuenta', 'cuenta bloqueada',
+                                      'amenaza de', 'amenaza', 'si no', 'inmediato', 'ahora', 'urgente', '24 horas']
+                    found_threats = [kw for kw in threat_keywords if kw in text_lower]
+                    if found_threats:
+                        print(f"[FAIL] Simulacion legitima contiene amenazas/urgencia: {found_threats[0]}, rechazada")
+                        total_errors += 1
+                        continue
+
+                # Validate: simulación debe ser temáticamente coherente con artículo
+                articulo_text = (articulo.titulo + ' ' + articulo.contenido).lower()
+                sim_text_lower = simulacion_text.lower()
+
+                # Rechazar desajustes temáticos claros
+                # Si artículo habla de "ofertas laborales" pero simulación es bancaria, rechazar
+                if ('oferta' in articulo_text or 'laboral' in articulo_text or 'trabajo' in articulo_text):
+                    if any(banco in sim_text_lower for banco in ['itau', 'bcp', 'bnf', 'gnb', 'sudameris', 'basa', 'banco']):
+                        print(f"[FAIL] Desajuste temático: oferta laboral pero simulación es bancaria")
+                        total_errors += 1
+                        continue
+
+                # Palabras clave comunes del artículo (excepto muy genéricas)
+                articulo_words = [w for w in articulo_text.split()
+                                if len(w) > 4 and w not in ['que', 'para', 'con', 'como', 'esta', 'sido', 'usuario', 'email', 'correo']]
+
+                # Si el artículo tiene palabras clave únicas, buscar al menos una en la simulación
+                if articulo_words:
+                    common_words = [w for w in articulo_words if w in sim_text_lower]
+                    if not common_words:
+                        print(f"[FAIL] Simulacion NO relacionada al articulo, rechazada")
+                        total_errors += 1
+                        continue
+
+                # Validate: NO presionar teclas específicas (pero SÍ permitir clicks)
+                text_lower = simulacion_text.lower()
+                # Rechazar SOLO si pide presionar teclas específicas
+                keyboard_keywords = ['presione', 'presiona', 'pulsa', 'pulsando', 'presionar tecla',
+                                    'tecla a', 'tecla b', 'tecla c', 'tecla d', 'tecla e',
+                                    'presione la tecla', 'pulsa la tecla']
+                found_keyboard = [kw for kw in keyboard_keywords if kw in text_lower]
+                if found_keyboard:
+                    print(f"[FAIL] Simulacion solicita presionar teclas, rechazada: {found_keyboard[0]}")
+                    total_errors += 1
+                    continue
+
                 # Validate entity is real Paraguayan organization
                 entidad = str(resultado.get('entidad_objetivo', '')).upper()
+
+                # Rechazar "BANCO NACIONAL" genérico - debe ser BCP o BNF explícitamente
+                if 'BANCO NACIONAL' in entidad and 'BNF' not in entidad and 'BCP' not in entidad:
+                    print(f"[FAIL] Entidad ambigua 'BANCO NACIONAL' - debe ser BCP o BNF específicamente")
+                    total_errors += 1
+                    continue
+
                 validated_keywords = list(ENTIDADES_REALES_PARAGUAY.keys())
                 if not any(kw in entidad for kw in validated_keywords):
                     print(f"[FAIL] Entidad no validada: {entidad}")
@@ -188,6 +246,7 @@ def generate_simulations_for_articles(only_missing=True):
                     tipo_mensaje=resultado.get('tipo_mensaje', 'correo'),
                     sender_email=resultado.get('sender_email', ''),
                     subject=resultado.get('subject', ''),
+                    nombre_contacto=resultado.get('nombre_contacto', ''),
                     attachments=resultado.get('attachments', []),
                     enlace_senuelo=resultado.get('enlace_senuelo', ''),
                     entidad_objetivo=resultado.get('entidad_objetivo', ''),
