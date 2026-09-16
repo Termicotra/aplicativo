@@ -13,5 +13,8 @@ venv/
 # VS Code
 .vscode/
 
+# Static files
+staticfiles/
+
 #Clause
 .claude/
