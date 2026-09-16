@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlsplit
 import dj_database_url
 
 
@@ -37,6 +38,48 @@ def load_dotenv(env_path: Path) -> None:
 load_dotenv(BASE_DIR / '.env')
 
 
+def split_env_list(*env_names: str, default: str = '') -> list[str]:
+    values: list[str] = []
+    for env_name in env_names:
+        raw_value = os.getenv(env_name, default)
+        if not raw_value:
+            continue
+        values.extend(part.strip() for part in raw_value.split(',') if part.strip())
+    return values
+
+
+def clean_env_value(value: str) -> str:
+    return value.strip().strip('"').strip("'")
+
+
+def normalize_allowed_host(value: str) -> str:
+    cleaned_value = clean_env_value(value)
+    if '://' in cleaned_value:
+        parsed_value = urlsplit(cleaned_value)
+    else:
+        parsed_value = urlsplit(f'//{cleaned_value}')
+
+    return parsed_value.hostname or cleaned_value.rstrip('/')
+
+
+def normalize_origin(value: str) -> str:
+    cleaned_value = clean_env_value(value).rstrip('/')
+    if not cleaned_value:
+        return cleaned_value
+
+    if '://' in cleaned_value:
+        parsed_value = urlsplit(cleaned_value)
+        if parsed_value.scheme and parsed_value.netloc:
+            return f'{parsed_value.scheme}://{parsed_value.netloc}'
+        return cleaned_value
+
+    parsed_value = urlsplit(f'//{cleaned_value}')
+    if parsed_value.netloc:
+        return f'https://{parsed_value.netloc}'
+
+    return cleaned_value
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -51,9 +94,9 @@ ALLOWED_HOSTS = [
     'localhost',
     'testserver',
 ] + [
-    host.strip()
-    for host in os.getenv('ALLOWED_HOSTS', '').split(',')
-    if host.strip()
+    normalize_allowed_host(host)
+    for host in split_env_list('ALLOWED_HOSTS', 'DJANGO_ALLOWED_HOSTS')
+    if normalize_allowed_host(host)
 ]
 
 
@@ -223,12 +266,18 @@ LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
 CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
+    normalize_origin(origin)
+    for origin in split_env_list(
         'CORS_ALLOWED_ORIGINS',
-        'http://localhost:5173,http://127.0.0.1:5173',
-    ).split(',')
-    if origin.strip()
+        default='http://localhost:5173,http://127.0.0.1:5173',
+    )
+    if normalize_origin(origin)
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    normalize_origin(origin)
+    for origin in split_env_list('CSRF_TRUSTED_ORIGINS', 'DJANGO_CSRF_TRUSTED_ORIGINS')
+    if normalize_origin(origin)
+]
