@@ -179,17 +179,36 @@ class EvaluacionesPendientesAPIView(APIView):
         ).values_list('ejercicio_id', flat=True).distinct()
 
         # Obtener ejercicios activos que no ha respondido
-        evaluaciones_pendientes = Ejercicio.objects.filter(
+        ejercicios_pendientes = Ejercicio.objects.filter(
             activo=True
         ).exclude(
             id__in=ejercicios_respondidos
-        ).prefetch_related('opciones').values(
-            'id', 'tema', 'pregunta', 'concepto', 'ejemplo'
-        )
+        ).prefetch_related('opciones').order_by('id')
+
+        # Serializar con opciones
+        pendientes_data = []
+        for ejercicio in ejercicios_pendientes:
+            opciones = [
+                {
+                    'id': opcion.id,
+                    'texto': opcion.texto,
+                    'orden': opcion.orden,
+                }
+                for opcion in ejercicio.opciones.all()
+            ]
+
+            pendientes_data.append({
+                'id': ejercicio.id,
+                'tema': ejercicio.tema,
+                'pregunta': ejercicio.pregunta,
+                'concepto': ejercicio.concepto,
+                'ejemplo': ejercicio.ejemplo,
+                'opciones': opciones,
+            })
 
         return Response({
-            'pendientes': list(evaluaciones_pendientes),
-            'total_pendientes': len(evaluaciones_pendientes),
+            'pendientes': pendientes_data,
+            'total_pendientes': len(pendientes_data),
             'total_ejercicios': Ejercicio.objects.filter(activo=True).count(),
         }, status=status.HTTP_200_OK)
 
