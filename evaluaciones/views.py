@@ -124,10 +124,21 @@ class RespuestasEvaluacionAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        # Obtener la última respuesta por ejercicio
-        respuestas = RespuestaEjercicio.objects.filter(usuario=request.user).select_related('ejercicio').values(
+        from django.db.models import Max
+
+        # Obtener el ID de la última respuesta de cada ejercicio
+        latest_respuestas = RespuestaEjercicio.objects.filter(
+            usuario=request.user
+        ).values('ejercicio').annotate(
+            latest_id=Max('id')
+        ).values_list('latest_id', flat=True)
+
+        # Obtener solo las últimas respuestas
+        respuestas = RespuestaEjercicio.objects.filter(
+            id__in=latest_respuestas
+        ).select_related('ejercicio').values(
             'id', 'usuario', 'ejercicio', 'es_correcta', 'fecha_respuesta'
-        ).annotate(ejercicio_tema=F('ejercicio__tema')).order_by('ejercicio', '-fecha_respuesta').distinct('ejercicio')
+        ).annotate(ejercicio_tema=F('ejercicio__tema')).order_by('-fecha_respuesta')
 
         return Response(list(respuestas), status=status.HTTP_200_OK)
 
