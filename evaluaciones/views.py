@@ -1,9 +1,10 @@
 from django.shortcuts import get_object_or_404
-from django.db.models import F
+from django.db.models import F, Count, Q
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.decorators import action
 
 from .models import Ejercicio, OpcionEjercicio, RespuestaEjercicio
 from .serializers import (
@@ -146,3 +147,135 @@ class TotalesEvaluacionAPIView(APIView):
     def get(self, request):
         total_evaluaciones = Ejercicio.objects.filter(activo=True).count()
         return Response({'total': total_evaluaciones}, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Obtener evaluaciones pendientes',
+    description='Devuelve solo los ejercicios que el usuario aún no ha completado.',
+    responses={200: None},
+)
+class EvaluacionesPendientesAPIView(APIView):
+    """
+    Devuelve ejercicios que el usuario aún no ha respondido.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Obtener IDs de ejercicios respondidos por el usuario
+        ejercicios_respondidos = RespuestaEjercicio.objects.filter(
+            usuario=request.user
+        ).values_list('ejercicio_id', flat=True).distinct()
+
+        # Obtener ejercicios activos que no ha respondido
+        evaluaciones_pendientes = Ejercicio.objects.filter(
+            activo=True
+        ).exclude(
+            id__in=ejercicios_respondidos
+        ).prefetch_related('opciones').values(
+            'id', 'tema', 'pregunta', 'concepto', 'ejemplo'
+        )
+
+        return Response({
+            'pendientes': list(evaluaciones_pendientes),
+            'total_pendientes': len(evaluaciones_pendientes),
+            'total_ejercicios': Ejercicio.objects.filter(activo=True).count(),
+        }, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Obtener estadísticas de progreso',
+    description='Devuelve porcentaje de aciertos, total respondidas y otras estadísticas.',
+    responses={200: None},
+)
+class EstadisticasEvaluacionAPIView(APIView):
+    """
+    Devuelve estadísticas detalladas del progreso en evaluaciones.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Total de respuestas del usuario
+        total_respuestas = RespuestaEjercicio.objects.filter(usuario=request.user).count()
+
+        # Respuestas correctas
+        respuestas_correctas = RespuestaEjercicio.objects.filter(
+            usuario=request.user,
+            es_correcta=True
+        ).count()
+
+        # Total de ejercicios activos
+        total_ejercicios = Ejercicio.objects.filter(activo=True).count()
+
+        # Ejercicios respondidos (al menos una vez)
+        ejercicios_respondidos = RespuestaEjercicio.objects.filter(
+            usuario=request.user
+        ).values('ejercicio').distinct().count()
+
+        # Ejercicios pendientes
+        ejercicios_pendientes = total_ejercicios - ejercicios_respondidos
+
+        # Porcentaje de aciertos
+        porcentaje_aciertos = 0
+        if total_respuestas > 0:
+            porcentaje_aciertos = round((respuestas_correctas / total_respuestas) * 100, 2)
+
+        # Obtener datos por tema
+        estadisticas_por_tema = RespuestaEjercicio.objects.filter(
+            usuario=request.user
+        ).values('ejercicio__tema').annotate(
+            total=Count('id'),
+            correctas=Count('id', filter=Q(es_correcta=True))
+        ).order_by('ejercicio__tema')
+
+        temas = []
+        for stat in estadisticas_por_tema:
+            tema = stat['ejercicio__tema']
+            total = stat['total']
+            correctas = stat['correctas']
+            porcentaje = round((correctas / total) * 100, 2) if total > 0 else 0
+            temas.append({
+                'tema': tema,
+                'total': total,
+                'correctas': correctas,
+                'porcentaje': porcentaje,
+            })
+
+        return Response({
+            'total_respuestas': total_respuestas,
+            'respuestas_correctas': respuestas_correctas,
+            'porcentaje_aciertos': porcentaje_aciertos,
+            'total_ejercicios': total_ejercicios,
+            'ejercicios_respondidos': ejercicios_respondidos,
+            'ejercicios_pendientes': ejercicios_pendientes,
+            'completado': ejercicios_pendientes == 0,
+            'estadisticas_por_tema': temas,
+        }, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Resetear evaluaciones',
+    description='Borra todas las respuestas del usuario para empezar de nuevo.',
+    responses={200: None},
+)
+class ResetearEvaluacionesAPIView(APIView):
+    """
+    Elimina todas las respuestas del usuario, permitiendo empezar de nuevo.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            deleted_count, _ = RespuestaEjercicio.objects.filter(usuario=request.user).delete()
+            return Response({
+                'status': 'success',
+                'message': f'Se eliminaron {deleted_count} respuestas',
+                'respuestas_eliminadas': deleted_count,
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': str(e),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
