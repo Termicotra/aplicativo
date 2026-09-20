@@ -1,5 +1,9 @@
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, viewsets, status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.core.management import call_command
+from django.http import JsonResponse
 
 from .models import Articulo
 from .serializers import ArticuloSerializer
@@ -18,4 +22,26 @@ class ArticuloViewSet(viewsets.ModelViewSet):
 	serializer_class = ArticuloSerializer
 	permission_classes = [permissions.AllowAny]
 
-# Create your views here.
+
+@api_view(['POST'])
+@extend_schema(
+	tags=['Tareas'],
+	summary='Ejecutar refresco de datos',
+	description='Ejecuta la tarea de refresco: borra artículos y simulaciones, luego regenera.'
+)
+def refresh_data(request):
+	"""
+	Ejecuta el comando de refresco de datos.
+	Solo POST permitido.
+	"""
+	try:
+		call_command('refresh_data')
+		return Response(
+			{'status': 'success', 'message': 'Datos refrescados exitosamente'},
+			status=status.HTTP_200_OK
+		)
+	except Exception as e:
+		return Response(
+			{'status': 'error', 'message': str(e)},
+			status=status.HTTP_500_INTERNAL_SERVER_ERROR
+		)
