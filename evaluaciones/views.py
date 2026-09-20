@@ -186,32 +186,43 @@ class EvaluacionesPendientesAPIView(APIView):
 @extend_schema(
     tags=['Evaluaciones'],
     summary='Obtener estadísticas de progreso',
-    description='Devuelve porcentaje de aciertos, total respondidas y otras estadísticas.',
+    description='Devuelve porcentaje de aciertos, total respondidas y otras estadísticas (última respuesta por ejercicio).',
     responses={200: None},
 )
 class EstadisticasEvaluacionAPIView(APIView):
     """
     Devuelve estadísticas detalladas del progreso en evaluaciones.
+    Solo cuenta la última respuesta de cada usuario por ejercicio.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        # Total de respuestas del usuario
-        total_respuestas = RespuestaEjercicio.objects.filter(usuario=request.user).count()
+        # Obtener la última respuesta del usuario por cada ejercicio
+        from django.db.models import Max
 
-        # Respuestas correctas
-        respuestas_correctas = RespuestaEjercicio.objects.filter(
-            usuario=request.user,
-            es_correcta=True
-        ).count()
+        # Subquery para obtener el ID de la última respuesta de cada ejercicio
+        latest_respuestas = RespuestaEjercicio.objects.filter(
+            usuario=request.user
+        ).values('ejercicio').annotate(
+            latest_id=Max('id')
+        ).values_list('latest_id', flat=True)
+
+        # Obtener solo las últimas respuestas
+        ultimas_respuestas = RespuestaEjercicio.objects.filter(
+            id__in=latest_respuestas
+        ).select_related('ejercicio')
+
+        # Total de última respuestas
+        total_respuestas = len(ultimas_respuestas)
+
+        # Respuestas correctas (últimas)
+        respuestas_correctas = sum(1 for r in ultimas_respuestas if r.es_correcta)
 
         # Total de ejercicios activos
         total_ejercicios = Ejercicio.objects.filter(activo=True).count()
 
         # Ejercicios respondidos (al menos una vez)
-        ejercicios_respondidos = RespuestaEjercicio.objects.filter(
-            usuario=request.user
-        ).values('ejercicio').distinct().count()
+        ejercicios_respondidos = total_respuestas
 
         # Ejercicios pendientes
         ejercicios_pendientes = total_ejercicios - ejercicios_respondidos
@@ -221,19 +232,21 @@ class EstadisticasEvaluacionAPIView(APIView):
         if total_respuestas > 0:
             porcentaje_aciertos = round((respuestas_correctas / total_respuestas) * 100, 2)
 
-        # Obtener datos por tema
-        estadisticas_por_tema = RespuestaEjercicio.objects.filter(
-            usuario=request.user
-        ).values('ejercicio__tema').annotate(
-            total=Count('id'),
-            correctas=Count('id', filter=Q(es_correcta=True))
-        ).order_by('ejercicio__tema')
+        # Obtener datos por tema (última respuesta)
+        temas_dict = {}
+        for respuesta in ultimas_respuestas:
+            tema = respuesta.ejercicio.tema
+            if tema not in temas_dict:
+                temas_dict[tema] = {'correctas': 0, 'total': 0}
+
+            temas_dict[tema]['total'] += 1
+            if respuesta.es_correcta:
+                temas_dict[tema]['correctas'] += 1
 
         temas = []
-        for stat in estadisticas_por_tema:
-            tema = stat['ejercicio__tema']
-            total = stat['total']
-            correctas = stat['correctas']
+        for tema, datos in sorted(temas_dict.items()):
+            correctas = datos['correctas']
+            total = datos['total']
             porcentaje = round((correctas / total) * 100, 2) if total > 0 else 0
             temas.append({
                 'tema': tema,
