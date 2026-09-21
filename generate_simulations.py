@@ -271,11 +271,16 @@ def generate_simulations_for_articles(only_missing=True):
     print(f"Artículos saltados: {total_skipped}")
 
 
-if __name__ == '__main__':
+def main():
+    """Función principal para generar simulaciones"""
     import sys
-    
+
     # Check if user wants to regenerate all (--all flag)
     regenerate_all = '--all' in sys.argv
-    
+
     print(f"Modo: {'Regenerar TODO' if regenerate_all else 'Solo faltantes'}")
     generate_simulations_for_articles(only_missing=not regenerate_all)
+
+
+if __name__ == '__main__':
+    main()
