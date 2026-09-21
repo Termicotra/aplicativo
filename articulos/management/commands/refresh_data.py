@@ -51,36 +51,36 @@ class Command(BaseCommand):
             # Paso 1: Borrar datos de simulaciones
             self.stdout.write('1. Borrando simulaciones...')
             count = Simulacion.objects.all().delete()[0]
-            self.stdout.write(self.style.SUCCESS(f'   ✓ {count} simulaciones borradas'))
+            self.stdout.write(self.style.SUCCESS(f'   OK {count} simulaciones borradas'))
 
             # Paso 2: Borrar datos de artículos
-            self.stdout.write('2. Borrando artículos...')
+            self.stdout.write('2. Borrando articulos...')
             count = Articulo.objects.all().delete()[0]
-            self.stdout.write(self.style.SUCCESS(f'   ✓ {count} artículos borrados'))
+            self.stdout.write(self.style.SUCCESS(f'   OK {count} articulos borrados'))
 
             # Paso 3: Ejecutar ingestion de artículos
-            self.stdout.write('3. Ejecutando ingestion de artículos...')
+            self.stdout.write('3. Ejecutando ingestion de articulos...')
             try:
                 from articulos.ingestion import main as ingest_main
                 ingest_main()
-                self.stdout.write(self.style.SUCCESS('   ✓ Ingestion completada'))
+                self.stdout.write(self.style.SUCCESS('   OK Ingestion completada'))
             except Exception as e:
-                self.stdout.write(self.style.WARNING(f'   ⚠ Ingestion falló: {e}'))
+                self.stdout.write(self.style.WARNING(f'   WARN Ingestion fallo: {e}'))
 
             # Paso 4: Ejecutar generación de simulaciones
             self.stdout.write('4. Generando simulaciones...')
             try:
                 from generate_simulations import main as sim_main
                 sim_main()
-                self.stdout.write(self.style.SUCCESS('   ✓ Simulaciones generadas'))
+                self.stdout.write(self.style.SUCCESS('   OK Simulaciones generadas'))
             except Exception as e:
-                self.stdout.write(self.style.WARNING(f'   ⚠ Generación de simulaciones falló: {e}'))
+                self.stdout.write(self.style.WARNING(f'   WARN Generacion de simulaciones fallo: {e}'))
 
             # Guardar timestamp de la última ejecución exitosa
             cache.set(cache_key, now.isoformat(), timeout=None)  # timeout=None = indefinido
 
             self.stdout.write('\n' + '=' * 60)
-            self.stdout.write(self.style.SUCCESS('✓ Proceso de refresco completado exitosamente'))
+            self.stdout.write(self.style.SUCCESS('OK Proceso de refresco completado exitosamente'))
             self.stdout.write(f'Próxima ejecución: {(now + timedelta(days=15)).strftime("%Y-%m-%d %H:%M:%S")}')
             self.stdout.write('=' * 60)
 
