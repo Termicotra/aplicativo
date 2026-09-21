@@ -1481,3 +1481,9 @@ def _normalize_abc_search_item(row: dict[str, Any]) -> dict[str, Any] | None:
     return normalized  # Si pasó todos los filtros, retorna
 
 
+def main():
+    """Función principal para ejecutar ingestion de artículos"""
+    resultado = run_weekly_ingestion()
+    return resultado
+
+
