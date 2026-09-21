@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -41,6 +41,16 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 		return token
 
 	def validate(self, attrs):
+		# Hacer login case-insensitive: buscar usuario por username en minúsculas
+		username = attrs.get('username', '').lower()
+		password = attrs.get('password', '')
+
+		try:
+			user = User.objects.get(username__iexact=username)
+			attrs['username'] = user.username
+		except User.DoesNotExist:
+			pass
+
 		data = super().validate(attrs)
 		data['user'] = AuthUserSerializer(self.user).data
 		return data
