@@ -135,9 +135,66 @@ SEED_LECCIONES = [
         ],
     },
     {
+        'titulo': 'Ingenieria social y manipulacion',
+        'duracion': '9 min',
+        'orden': 6,
+        'contenido_titulo': 'Tecnicas de Manipulacion Psicologica',
+        'bloqueada': False,
+        'secciones': [
+            {
+                'encabezado': 'Que es la ingenieria social?',
+                'texto': 'La ingenieria social es el uso de manipulacion psicologica para engañar a las personas y obtener informacion confidencial o acceso a sistemas. A diferencia del phishing, no siempre requiere tecnologia.',
+                'orden': 1,
+            },
+            {
+                'encabezado': 'Tecnicas comunes de manipulacion',
+                'texto': '',
+                'orden': 2,
+                'items': [
+                    'Urgencia extrema: "Tu cuenta sera bloqueada en 24 horas"',
+                    'Autoridad falsa: Fingir ser personal de banco o gobierno',
+                    'Confianza: Crear rapport antes de pedir informacion',
+                    'Miedo: Amenazar con consecuencias negativas',
+                    'Recompensa falsa: Prometer dinero o premios',
+                ],
+            },
+            {
+                'encabezado': 'Suplantacion de seres cercanos',
+                'texto': 'Una tecnica especialmente efectiva es cuando un atacante se hace pasar por un familiar cercano (padres, hermanos, hijos) en peligro para solicitar dinero urgentemente. En Paraguay, estos ataques son comunes via WhatsApp o llamadas telefonicas.',
+                'orden': 3,
+            },
+            {
+                'encabezado': 'Ejemplo: "Hola papa"',
+                'texto': '',
+                'orden': 4,
+                'items': [
+                    'El atacante obtiene el numero de WhatsApp de un familiar',
+                    'Cambia el nombre del perfil al del familiar real',
+                    'Escribe: "Hola papa, soy tu hijo. Tengo un problema"',
+                    'Crea una historia urgente: accidente, multa, secuestro',
+                    'Solicita transferencia inmediata o datos bancarios',
+                    'Desaparece antes de que se verifique la historia',
+                ],
+            },
+            {
+                'encabezado': 'Como protegerse',
+                'texto': '',
+                'orden': 5,
+                'items': [
+                    'Verifica directamente con la persona: llama o pregunta en persona',
+                    'Desconfia de mensajes urgentes inesperados',
+                    'Nunca comparte datos personales o bancarios por chat',
+                    'Si es urgencia financiera, cuelga y llama de vuelta',
+                    'Confirma cambios de cuenta bancaria por metodo oficial',
+                    'Educa a familiares sobre estas tacticas',
+                ],
+            },
+        ],
+    },
+    {
         'titulo': 'Proteccion y prevencion',
         'duracion': '10 min',
-        'orden': 6,
+        'orden': 7,
         'contenido_titulo': 'Mejores Practicas de Seguridad',
         'bloqueada': False,
         'secciones': [
