@@ -6,20 +6,20 @@ from capacitaciones.models import Leccion, SeccionLeccion, ItemListaSeccion
 
 SEED_LECCIONES = [
     {
-        'titulo': 'Que es el Phishing?',
+        'titulo': '¿Qué es el Phishing?',
         'duracion': '5 min',
         'orden': 1,
-        'contenido_titulo': 'Introduccion al Phishing',
+        'contenido_titulo': 'Introducción al Phishing',
         'bloqueada': False,
         'secciones': [
             {
-                'encabezado': 'Definicion',
-                'texto': 'El phishing es una forma de engano donde un atacante se hace pasar por una fuente confiable para obtener informacion personal o financiera de la victima.',
+                'encabezado': 'Definición',
+                'texto': 'El phishing es una forma de engaño donde un atacante se hace pasar por una fuente confiable para obtener información personal o financiera de la víctima.',
                 'orden': 1,
             },
             {
-                'encabezado': 'Por que es peligroso?',
-                'texto': 'En Paraguay, se registraron mas de 551 millones de intentos de ciberataques en la primera mitad de 2025. El phishing es una de las tecnicas mas utilizadas por ciberdelincuentes.',
+                'encabezado': '¿Por qué es peligroso?',
+                'texto': 'En Paraguay, se registraron más de 551 millones de intentos de ciberataques en la primera mitad de 2025. El phishing es una de las técnicas más utilizadas por ciberdelincuentes.',
                 'orden': 2,
             },
             {
@@ -29,7 +29,7 @@ SEED_LECCIONES = [
                 'items': [
                     'Email phishing: Correos falsos que imitan bancos o servicios',
                     'Smishing: Mensajes SMS fraudulentos',
-                    'Vishing: Llamadas telefonicas enganosas',
+                    'Vishing: Llamadas telefónicas engañosas',
                     'Spear phishing: Ataques personalizados',
                 ],
             },
@@ -39,28 +39,28 @@ SEED_LECCIONES = [
         'titulo': 'Identificar URLs sospechosas',
         'duracion': '7 min',
         'orden': 2,
-        'contenido_titulo': 'Analisis de URLs',
+        'contenido_titulo': 'Análisis de URLs',
         'secciones': [
             {
-                'encabezado': 'Senales de alerta',
+                'encabezado': 'Señales de alerta',
                 'texto': '',
                 'orden': 1,
                 'items': [
                     'Dominios mal escritos: "bancobcp.com" vs "banc0bcp.com"',
-                    'Subdominios enganosos: "login.banco.sitiofalso.com"',
+                    'Subdominios engañosos: "login.banco.sitiofalso.com"',
                     'HTTP en lugar de HTTPS',
                     'URLs acortadas de fuentes desconocidas',
                 ],
             },
             {
-                'encabezado': 'Como verificar',
-                'texto': 'Siempre pasa el cursor sobre los enlaces antes de hacer clic. En moviles, manten presionado el enlace para ver la URL completa.',
+                'encabezado': 'Cómo verificar',
+                'texto': 'Siempre pasa el cursor sobre los enlaces antes de hacer clic. En móviles, mantén presionado el enlace para ver la URL completa.',
                 'orden': 2,
             },
         ],
     },
     {
-        'titulo': 'Correos electronicos falsos',
+        'titulo': 'Correos electrónicos falsos',
         'duracion': '8 min',
         'orden': 3,
         'contenido_titulo': 'Detectando emails fraudulentos',
@@ -71,15 +71,15 @@ SEED_LECCIONES = [
                 'orden': 1,
                 'items': [
                     'Remitentes con dominios sospechosos',
-                    'Errores ortograficos y gramaticales',
+                    'Errores ortográficos y gramaticales',
                     'Urgencia extrema o amenazas',
-                    'Solicitudes de informacion personal',
+                    'Solicitudes de información personal',
                     'Archivos adjuntos inesperados',
                 ],
             },
             {
                 'encabezado': 'Ejemplo en Paraguay',
-                'texto': 'Es comun recibir correos falsos que simulan ser de Tigo, Personal, o bancos locales solicitando "verificar tu cuenta" o "actualizar datos".',
+                'texto': 'Es común recibir correos falsos que simulan ser de Tigo, Personal, o bancos locales solicitando "verificar tu cuenta" o "actualizar datos".',
                 'orden': 2,
             },
         ],
@@ -92,12 +92,12 @@ SEED_LECCIONES = [
         'bloqueada': False,
         'secciones': [
             {
-                'encabezado': 'Que es Smishing?',
-                'texto': 'El smishing es phishing a traves de mensajes SMS. Los atacantes envian mensajes que parecen ser de bancos o servicios legitimando para robar informacion.',
+                'encabezado': '¿Qué es Smishing?',
+                'texto': 'El smishing es phishing a través de mensajes SMS. Los atacantes envían mensajes que parecen ser de bancos o servicios legitimando para robar información.',
                 'orden': 1,
             },
             {
-                'encabezado': 'Como identificar',
+                'encabezado': 'Cómo identificar',
                 'texto': '',
                 'orden': 2,
                 'items': [
@@ -118,66 +118,66 @@ SEED_LECCIONES = [
         'secciones': [
             {
                 'encabezado': 'Riesgos en redes sociales',
-                'texto': 'Las redes sociales son un objetivo comun para phishing. Los atacantes crean perfiles falsos o usan tecnicas de social engineering para obtener acceso a cuentas.',
+                'texto': 'Las redes sociales son un objetivo común para phishing. Los atacantes crean perfiles falsos o usan técnicas de social engineering para obtener acceso a cuentas.',
                 'orden': 1,
             },
             {
-                'encabezado': 'Proteccion basica',
+                'encabezado': 'Protección básica',
                 'texto': '',
                 'orden': 2,
                 'items': [
                     'No hagas clic en enlaces sospechosos en mensajes directos',
                     'Verifica la identidad de perfiles antes de interactuar',
-                    'Usa autenticacion de dos factores',
-                    'No compartas informacion personal sensible',
+                    'Usa autenticación de dos factores',
+                    'No compartas información personal sensible',
                 ],
             },
         ],
     },
     {
-        'titulo': 'Ingenieria social y manipulacion',
+        'titulo': 'Ingeniería social y manipulación',
         'duracion': '9 min',
         'orden': 6,
-        'contenido_titulo': 'Tecnicas de Manipulacion Psicologica',
+        'contenido_titulo': 'Técnicas de Manipulación Psicológica',
         'bloqueada': False,
         'secciones': [
             {
-                'encabezado': 'Que es la ingenieria social?',
-                'texto': 'La ingenieria social es el uso de manipulacion psicologica para engañar a las personas y obtener informacion confidencial o acceso a sistemas. A diferencia del phishing, no siempre requiere tecnologia.',
+                'encabezado': '¿Qué es la ingeniería social?',
+                'texto': 'La ingeniería social es el uso de manipulación psicológica para engañar a las personas y obtener información confidencial o acceso a sistemas. A diferencia del phishing, no siempre requiere tecnología.',
                 'orden': 1,
             },
             {
-                'encabezado': 'Tecnicas comunes de manipulacion',
+                'encabezado': 'Técnicas comunes de manipulación',
                 'texto': '',
                 'orden': 2,
                 'items': [
-                    'Urgencia extrema: "Tu cuenta sera bloqueada en 24 horas"',
+                    'Urgencia extrema: "Tu cuenta será bloqueada en 24 horas"',
                     'Autoridad falsa: Fingir ser personal de banco o gobierno',
-                    'Confianza: Crear rapport antes de pedir informacion',
+                    'Confianza: Crear rapport antes de pedir información',
                     'Miedo: Amenazar con consecuencias negativas',
                     'Recompensa falsa: Prometer dinero o premios',
                 ],
             },
             {
-                'encabezado': 'Suplantacion de seres cercanos',
-                'texto': 'Una tecnica especialmente efectiva es cuando un atacante se hace pasar por un familiar cercano (padres, hermanos, hijos) en peligro para solicitar dinero urgentemente. En Paraguay, estos ataques son comunes via WhatsApp o llamadas telefonicas.',
+                'encabezado': 'Suplantación de seres cercanos',
+                'texto': 'Una técnica especialmente efectiva es cuando un atacante se hace pasar por un familiar cercano (padres, hermanos, hijos) en peligro para solicitar dinero urgentemente. En Paraguay, estos ataques son comunes vía WhatsApp o llamadas telefónicas.',
                 'orden': 3,
             },
             {
-                'encabezado': 'Ejemplo: "Hola papa"',
+                'encabezado': 'Ejemplo: "Hola papá"',
                 'texto': '',
                 'orden': 4,
                 'items': [
-                    'El atacante obtiene el numero de WhatsApp de un familiar',
+                    'El atacante obtiene el número de WhatsApp de un familiar',
                     'Cambia el nombre del perfil al del familiar real',
-                    'Escribe: "Hola papa, soy tu hijo. Tengo un problema"',
+                    'Escribe: "Hola papá, soy tu hijo. Tengo un problema"',
                     'Crea una historia urgente: accidente, multa, secuestro',
                     'Solicita transferencia inmediata o datos bancarios',
                     'Desaparece antes de que se verifique la historia',
                 ],
             },
             {
-                'encabezado': 'Como protegerse',
+                'encabezado': 'Cómo protegerse',
                 'texto': '',
                 'orden': 5,
                 'items': [
@@ -192,10 +192,10 @@ SEED_LECCIONES = [
         ],
     },
     {
-        'titulo': 'Proteccion y prevencion',
+        'titulo': 'Protección y prevención',
         'duracion': '10 min',
         'orden': 7,
-        'contenido_titulo': 'Mejores Practicas de Seguridad',
+        'contenido_titulo': 'Mejores Prácticas de Seguridad',
         'bloqueada': False,
         'secciones': [
             {
@@ -204,10 +204,10 @@ SEED_LECCIONES = [
                 'orden': 1,
                 'items': [
                     'Mantén software y sistemas operativos actualizados',
-                    'Usa contrasenas fuertes y unicas',
-                    'Activa autenticacion de dos factores',
+                    'Usa contraseñas fuertes y únicas',
+                    'Activa autenticación de dos factores',
                     'Ten cuidado al descargar archivos adjuntos',
-                    'Verifica direcciones de correo electronico cuidadosamente',
+                    'Verifica direcciones de correo electrónico cuidadosamente',
                 ],
             },
             {
