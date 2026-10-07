@@ -24,7 +24,7 @@ User = get_user_model()
     destroy=extend_schema(tags=['Simulaciones'], summary='Eliminar simulación', description='Elimina una simulación del sistema.'),
 )
 class SimulacionViewSet(viewsets.ModelViewSet):
-    queryset = Simulacion.objects.select_related('usuario', 'articulo').all()
+    queryset = Simulacion.objects.select_related('articulo').all()
     serializer_class = SimulacionSerializer
     permission_classes = [permissions.AllowAny]
 

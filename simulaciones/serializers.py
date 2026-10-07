@@ -11,7 +11,6 @@ class SimulacionSerializer(serializers.ModelSerializer):
         model = Simulacion
         fields = [
             'id',
-            'usuario',
             'articulo',
             'articulo_titulo',
             'articulo_url',
