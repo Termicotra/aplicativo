@@ -1,9 +1,7 @@
-from django.contrib.auth import get_user_model
 from django.db import models
+from django.contrib.auth.models import User
 
 from articulos.models import Articulo
-
-User = get_user_model()
 
 
 class Simulacion(models.Model):
@@ -12,19 +10,12 @@ class Simulacion(models.Model):
         ('incorrecto', 'Incorrecto'),
         ('sin-responder', 'Sin responder'),
     )
-    
+
     TIPO_GENERACION_CHOICES = (
         ('inicial', 'Inicial'),
         ('regenerado', 'Regenerado'),
     )
 
-    usuario = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='simulaciones',
-        null=True,
-        blank=True,
-    )
     articulo = models.ForeignKey(
         Articulo,
         on_delete=models.CASCADE,
@@ -39,7 +30,6 @@ class Simulacion(models.Model):
     enlace_senuelo = models.TextField(default='')
     entidad_objetivo = models.CharField(max_length=255, default='')
     dominio_objetivo = models.CharField(max_length=255, default='')
-    nombre_contacto = models.CharField(max_length=255, default='', help_text='Para WhatsApp/SMS: nombre del contacto que envía')
     resumen_justificacion = models.TextField(default='')
     resultado = models.CharField(max_length=20, choices=RESULTADO_CHOICES, default='sin-responder')
     feedback = models.TextField(default='')
@@ -86,13 +76,6 @@ class AIInteraction(models.Model):
     # Identificador único secuencial para auditoría externa
     # Se rellenará por migración y en producción se configurará con una secuencia DB.
     id_iainteraction = models.BigIntegerField(unique=True, editable=False)
-    usuario = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        related_name='ai_interactions',
-        null=True,
-        blank=True,
-    )
     prompt = models.TextField()
     prompt_metadata = models.JSONField(default=dict, blank=True)
     response = models.TextField()

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model, authenticate
+from django.db.models import Count, Q
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -107,4 +108,73 @@ class ChangePasswordAPIView(APIView):
 		request.user.save(update_fields=['password'])
 		return Response({'message': 'Contraseña actualizada correctamente.'}, status=status.HTTP_200_OK)
 
-# Create your views here.
+
+@extend_schema(
+	tags=['Progreso'],
+	summary='Obtener progreso general',
+	description='Devuelve el progreso completo del usuario: lecciones, simulaciones y evaluaciones.',
+	responses={200: None},
+)
+class MiProgresoAPIView(APIView):
+	permission_classes = [permissions.IsAuthenticated]
+
+	def get(self, request):
+		user = request.user
+
+		# ============ LECCIONES ============
+		from capacitaciones.models import ProgresoCapacitacion, Leccion
+		lecciones_completadas = ProgresoCapacitacion.objects.filter(
+			usuario=user,
+			completada=True
+		).count()
+		lecciones_totales = Leccion.objects.filter(activa=True).count()
+
+		# ============ SIMULACIONES ============
+		from simulaciones.models import RespuestaSimulacion
+		simulaciones_correctas = RespuestaSimulacion.objects.filter(
+			usuario=user,
+			es_correcta=True
+		).count()
+		simulaciones_totales = RespuestaSimulacion.objects.filter(usuario=user).count()
+
+		# ============ EVALUACIONES ============
+		from evaluaciones.models import RespuestaEjercicio, Ejercicio
+		evaluaciones_correctas = RespuestaEjercicio.objects.filter(
+			usuario=user,
+			es_correcta=True
+		).count()
+		evaluaciones_totales = RespuestaEjercicio.objects.filter(usuario=user).count()
+		ejercicios_totales = Ejercicio.objects.filter(activo=True).count()
+
+		# ============ CÁLCULO DINÁMICO DE PROGRESO ============
+		# Cada módulo contribuye 1/3 al progreso general
+		progreso_lecciones = (lecciones_completadas / lecciones_totales * 100) if lecciones_totales > 0 else 0
+		progreso_simulaciones = (simulaciones_correctas / simulaciones_totales * 100) if simulaciones_totales > 0 else 0
+		progreso_evaluaciones = (evaluaciones_correctas / evaluaciones_totales * 100) if evaluaciones_totales > 0 else 0
+
+		# Promedio ponderado: 33% cada uno
+		progreso_general = round((progreso_lecciones + progreso_simulaciones + progreso_evaluaciones) / 3, 2)
+
+		# Cap al 100% máximo
+		progreso_general = min(progreso_general, 100.0)
+
+		return Response({
+			'progreso_general': progreso_general,
+			'puntaje_promedio': round((evaluaciones_correctas / evaluaciones_totales * 100), 2) if evaluaciones_totales > 0 else 0,
+			'lecciones': {
+				'completadas': lecciones_completadas,
+				'totales': lecciones_totales,
+				'porcentaje': round((lecciones_completadas / lecciones_totales * 100), 2) if lecciones_totales > 0 else 0,
+			},
+			'simulaciones': {
+				'correctas': simulaciones_correctas,
+				'totales': simulaciones_totales,
+				'porcentaje': round((simulaciones_correctas / simulaciones_totales * 100), 2) if simulaciones_totales > 0 else 0,
+			},
+			'evaluaciones': {
+				'correctas': evaluaciones_correctas,
+				'totales': evaluaciones_totales,
+				'porcentaje': round((evaluaciones_correctas / evaluaciones_totales * 100), 2) if evaluaciones_totales > 0 else 0,
+				'ejercicios_pendientes': ejercicios_totales - evaluaciones_totales,
+			},
+		}, status=status.HTTP_200_OK)

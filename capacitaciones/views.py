@@ -1,8 +1,9 @@
 from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from .models import Leccion, ProgresoCapacitacion
 from .serializers import (
     LeccionListSerializer,
@@ -52,3 +53,35 @@ class LeccionViewSet(viewsets.ReadOnlyModelViewSet):
         progresos = ProgresoCapacitacion.objects.filter(usuario=user)
         serializer = ProgresoCapacitacionSerializer(progresos, many=True)
         return Response(serializer.data)
+
+
+class SeedCapacitacionesAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        from django.core.management import call_command
+        from django.db import transaction
+
+        try:
+            reset = request.data.get('reset', False)
+            with transaction.atomic():
+                if reset:
+                    call_command('seed_capacitaciones', '--reset')
+                else:
+                    call_command('seed_capacitaciones')
+
+            return Response(
+                {
+                    'status': 'success',
+                    'message': 'Seed de capacitaciones ejecutado correctamente.',
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    'status': 'error',
+                    'message': str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

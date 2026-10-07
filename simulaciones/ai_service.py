@@ -963,7 +963,6 @@ def _record_ai_interaction(
     response_text: str,
     response_metadata: dict | None,
     model_name: str = '',
-    usuario=None,
 ) -> None:
     """Registrar la interacción en la tabla AIInteraction evitando duplicados.
 
@@ -982,10 +981,6 @@ def _record_ai_interaction(
             response=response_text,
             model_name=model_name or '',
         )
-        if usuario:
-            qs = qs.filter(usuario=usuario)
-        else:
-            qs = qs.filter(usuario__isnull=True)
 
         if qs.exists():
             print('Existing AIInteraction found, skipping create')
@@ -1007,7 +1002,6 @@ def _record_ai_interaction(
             next_id = None
 
         create_kwargs = dict(
-            usuario=usuario,
             prompt=prompt_text,
             prompt_metadata=prompt_metadata,
             response=response_text,
@@ -1422,7 +1416,7 @@ def generar_simulacion_y_feedback(
         'Eres experto generando emails de entrenamiento anti-phishing para Paraguay.\n'
         'Responde SOLO JSON valido sin texto extra:\n'
         '{"simulacion":"texto","tipo_mensaje":"correo|sms|whatsapp|sitio-web|otro",'
-        '"sender_email":"email","subject":"asunto","nombre_contacto":"nombre_para_whatsapp","attachments":[],"es_phishing":true,'
+        '"sender_email":"email","subject":"asunto","attachments":[],"es_phishing":true,'
         '"feedback":"explicacion","resultado":"correcto|incorrecto","resumen_justificacion":"por_que"}\n'
         '\n'
         'REGLAS FUNDAMENTALES (APLICAN A AMBOS):\n'
@@ -1475,11 +1469,6 @@ def generar_simulacion_y_feedback(
         '  [FAIL] Generico sin detalles del articulo\n'
         '  [FAIL] feedback describe phishing pero es_phishing=false (CONTRADICCION)\n'
         '  [FAIL] Solicita clicks, presionar botones, o acciones de teclado especificas (presione A, haga clic, etc.)\n'
-        '\n'
-        'NOMBRE_CONTACTO (SOLO PARA WHATSAPP/SMS):\n'
-        '  - Para phishing: nombre que simula ser oficial (ej: "BCP Seguridad", "IPS Oficial")\n'
-        '  - Para legitimo: nombre claro y profesional (ej: "BCP", "IPS Servicio Técnico")\n'
-        '  - Para otros tipos (correo, sitio-web): usar "" (vacío)\n'
         '\n'
         'Si rechazas: "simulacion": "ERROR: [razon breve]"\n'
     )
@@ -1906,7 +1895,6 @@ def generar_simulacion_y_feedback(
             response_text=response_raw,
             response_metadata=response_meta,
             model_name=resolved_model,
-            usuario=None,
         )
     except Exception:
         pass

@@ -246,7 +246,6 @@ def generate_simulations_for_articles(only_missing=True):
                     tipo_mensaje=resultado.get('tipo_mensaje', 'correo'),
                     sender_email=resultado.get('sender_email', ''),
                     subject=resultado.get('subject', ''),
-                    nombre_contacto=resultado.get('nombre_contacto', ''),
                     attachments=resultado.get('attachments', []),
                     enlace_senuelo=resultado.get('enlace_senuelo', ''),
                     entidad_objetivo=resultado.get('entidad_objetivo', ''),
