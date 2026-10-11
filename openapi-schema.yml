@@ -1,0 +1,1643 @@
+openapi: 3.0.3
+info:
+  title: Treck API
+  version: 1.0.0
+  description: API para autenticación, simulaciones, artículos y capacitaciones de
+    phishing.
+paths:
+  /api/articulos/:
+    get:
+      operationId: articulos_list
+      description: Consulta todos los artículos de contexto usados para generar simulaciones.
+      summary: Listar artículos
+      tags:
+      - Artículos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Articulo'
+          description: ''
+    post:
+      operationId: articulos_create
+      description: Registra un nuevo artículo de contexto para la base de conocimiento.
+      summary: Crear artículo
+      tags:
+      - Artículos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticuloRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticuloRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticuloRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Articulo'
+          description: ''
+  /api/articulos/{id}/:
+    get:
+      operationId: articulos_retrieve
+      description: Devuelve el detalle de un artículo específico.
+      summary: Obtener artículo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this articulo.
+        required: true
+      tags:
+      - Artículos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Articulo'
+          description: ''
+    put:
+      operationId: articulos_update
+      description: Actualiza todos los datos de un artículo existente.
+      summary: Actualizar artículo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this articulo.
+        required: true
+      tags:
+      - Artículos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticuloRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticuloRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticuloRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Articulo'
+          description: ''
+    patch:
+      operationId: articulos_partial_update
+      description: Modifica solo los campos enviados de un artículo existente.
+      summary: Actualizar artículo parcialmente
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this articulo.
+        required: true
+      tags:
+      - Artículos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArticuloRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArticuloRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArticuloRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Articulo'
+          description: ''
+    delete:
+      operationId: articulos_destroy
+      description: Elimina un artículo de la base de conocimiento.
+      summary: Eliminar artículo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this articulo.
+        required: true
+      tags:
+      - Artículos
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/capacitaciones/ejercicios/:
+    get:
+      operationId: capacitaciones_ejercicios_list
+      description: Obtiene los ejercicios de capacitación disponibles para evaluar
+        la detección de phishing.
+      summary: Listar ejercicios
+      tags:
+      - Capacitaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ejercicio'
+          description: ''
+    post:
+      operationId: capacitaciones_ejercicios_create
+      description: Registra un nuevo ejercicio de entrenamiento.
+      summary: Crear ejercicio
+      tags:
+      - Capacitaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EjercicioRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EjercicioRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EjercicioRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ejercicio'
+          description: ''
+  /api/capacitaciones/ejercicios/{id}/:
+    get:
+      operationId: capacitaciones_ejercicios_retrieve
+      description: Devuelve el detalle de un ejercicio específico.
+      summary: Obtener ejercicio
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ejercicio.
+        required: true
+      tags:
+      - Capacitaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ejercicio'
+          description: ''
+    put:
+      operationId: capacitaciones_ejercicios_update
+      description: Actualiza todos los datos de un ejercicio existente.
+      summary: Actualizar ejercicio
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ejercicio.
+        required: true
+      tags:
+      - Capacitaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EjercicioRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EjercicioRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EjercicioRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ejercicio'
+          description: ''
+    patch:
+      operationId: capacitaciones_ejercicios_partial_update
+      description: Modifica solo los campos enviados de un ejercicio existente.
+      summary: Actualizar ejercicio parcialmente
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ejercicio.
+        required: true
+      tags:
+      - Capacitaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEjercicioRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEjercicioRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEjercicioRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ejercicio'
+          description: ''
+    delete:
+      operationId: capacitaciones_ejercicios_destroy
+      description: Elimina un ejercicio de la plataforma.
+      summary: Eliminar ejercicio
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ejercicio.
+        required: true
+      tags:
+      - Capacitaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/capacitaciones/opciones/:
+    get:
+      operationId: capacitaciones_opciones_list
+      description: Devuelve todas las opciones asociadas a los ejercicios de entrenamiento.
+      summary: Listar opciones de ejercicio
+      tags:
+      - Capacitaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OpcionEjercicio'
+          description: ''
+    post:
+      operationId: capacitaciones_opciones_create
+      description: Registra una nueva opción para un ejercicio.
+      summary: Crear opción
+      tags:
+      - Capacitaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpcionEjercicioRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OpcionEjercicioRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OpcionEjercicioRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpcionEjercicio'
+          description: ''
+  /api/capacitaciones/opciones/{id}/:
+    get:
+      operationId: capacitaciones_opciones_retrieve
+      description: Devuelve una opción de ejercicio específica.
+      summary: Obtener opción
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this opcion ejercicio.
+        required: true
+      tags:
+      - Capacitaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpcionEjercicio'
+          description: ''
+    put:
+      operationId: capacitaciones_opciones_update
+      description: Actualiza todos los datos de una opción de ejercicio.
+      summary: Actualizar opción
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this opcion ejercicio.
+        required: true
+      tags:
+      - Capacitaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpcionEjercicioRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OpcionEjercicioRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OpcionEjercicioRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpcionEjercicio'
+          description: ''
+    patch:
+      operationId: capacitaciones_opciones_partial_update
+      description: Modifica solo los campos enviados de una opción de ejercicio.
+      summary: Actualizar opción parcialmente
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this opcion ejercicio.
+        required: true
+      tags:
+      - Capacitaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOpcionEjercicioRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOpcionEjercicioRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOpcionEjercicioRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpcionEjercicio'
+          description: ''
+    delete:
+      operationId: capacitaciones_opciones_destroy
+      description: Elimina una opción de ejercicio del sistema.
+      summary: Eliminar opción
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this opcion ejercicio.
+        required: true
+      tags:
+      - Capacitaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/capacitaciones/responder/:
+    post:
+      operationId: capacitaciones_responder_create
+      description: Evalúa la elección del usuario y devuelve retroalimentación educativa
+        contextualizada para reforzar el aprendizaje.
+      summary: Responder ejercicio
+      tags:
+      - Capacitaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResponderEjercicioRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResponderEjercicioRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResponderEjercicioRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/generar_simulacion/:
+    post:
+      operationId: generar_simulacion_create
+      description: Genera una simulación de phishing o legítima usando información
+        contextual de artículos recientes y feedback educativo.
+      summary: Generar simulación con IA
+      tags:
+      - Simulaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerarSimulacionRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GenerarSimulacionRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GenerarSimulacionRequestRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          description: No response body
+  /api/simulaciones/:
+    get:
+      operationId: simulaciones_list
+      description: Consulta todas las simulaciones generadas y asociadas a usuarios
+        y artículos.
+      summary: Listar simulaciones
+      tags:
+      - Simulaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Simulacion'
+          description: ''
+    post:
+      operationId: simulaciones_create
+      description: Crea una nueva simulación de phishing o legítima.
+      summary: Crear simulación
+      tags:
+      - Simulaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulacionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SimulacionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SimulacionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Simulacion'
+          description: ''
+  /api/simulaciones/{id}/:
+    get:
+      operationId: simulaciones_retrieve
+      description: Devuelve el detalle completo de una simulación específica.
+      summary: Obtener simulación
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this simulacion.
+        required: true
+      tags:
+      - Simulaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Simulacion'
+          description: ''
+    put:
+      operationId: simulaciones_update
+      description: Actualiza todos los campos de una simulación existente.
+      summary: Actualizar simulación
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this simulacion.
+        required: true
+      tags:
+      - Simulaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulacionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SimulacionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SimulacionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Simulacion'
+          description: ''
+    patch:
+      operationId: simulaciones_partial_update
+      description: Modifica solo los campos enviados de una simulación existente.
+      summary: Actualizar simulación parcialmente
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this simulacion.
+        required: true
+      tags:
+      - Simulaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSimulacionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSimulacionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSimulacionRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Simulacion'
+          description: ''
+    delete:
+      operationId: simulaciones_destroy
+      description: Elimina una simulación del sistema.
+      summary: Eliminar simulación
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this simulacion.
+        required: true
+      tags:
+      - Simulaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/simulaciones/obtener-aleatoria/:
+    get:
+      operationId: simulaciones_obtener_aleatoria_retrieve
+      description: Devuelve una simulación aleatoria para que el usuario la evalúe
+        como phishing o legítima.
+      summary: Obtener simulación aleatoria
+      tags:
+      - Simulaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Simulacion'
+          description: ''
+  /api/simulaciones/opuesto/:
+    post:
+      operationId: simulaciones_opuesto_create
+      description: Recupera la versión contraria de una simulación del mismo artículo
+        para comparar escenarios phishing y legítimos.
+      summary: Obtener simulación opuesta
+      tags:
+      - Simulaciones
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/simulaciones/registrar-respuesta/:
+    post:
+      operationId: simulaciones_registrar_respuesta_create
+      description: Recibe la decisión del usuario sobre una simulación y devuelve
+        si acertó o falló junto con la retroalimentación.
+      summary: Registrar respuesta del usuario
+      tags:
+      - Simulaciones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulacionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SimulacionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SimulacionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/users/:
+    get:
+      operationId: users_list
+      description: Endpoint administrativo para consultar usuarios registrados.
+      summary: Listar usuarios
+      tags:
+      - Autenticación
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: ''
+    post:
+      operationId: users_create
+      description: Crea un nuevo registro de usuario.
+      summary: Crear usuario
+      tags:
+      - Autenticación
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/users/{id}/:
+    get:
+      operationId: users_retrieve
+      description: Devuelve los datos de un usuario específico.
+      summary: Obtener usuario
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - Autenticación
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: users_update
+      description: Actualiza todos los datos de un usuario existente.
+      summary: Actualizar usuario
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - Autenticación
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: users_partial_update
+      description: Actualiza solo los campos enviados para un usuario existente.
+      summary: Actualizar usuario parcialmente
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - Autenticación
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: users_destroy
+      description: Elimina un usuario del sistema.
+      summary: Eliminar usuario
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - Autenticación
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/users/auth/change-password/:
+    post:
+      operationId: users_auth_change_password_create
+      description: Actualiza la contraseña del usuario autenticado validando la contraseña
+        actual.
+      summary: Cambiar contraseña
+      tags:
+      - Autenticación
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/auth/login/:
+    post:
+      operationId: users_auth_login_create
+      description: Autentica un usuario y devuelve un JWT junto con la información
+        pública del perfil.
+      summary: Iniciar sesión
+      tags:
+      - Autenticación
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/users/auth/login/refresh/:
+    post:
+      operationId: users_auth_login_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/users/auth/register/:
+    post:
+      operationId: users_auth_register_create
+      description: Crea un nuevo usuario con nombre, correo y contraseña segura.
+      summary: Registrar usuario
+      tags:
+      - Autenticación
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUser'
+          description: ''
+components:
+  schemas:
+    Articulo:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        titulo:
+          type: string
+          maxLength: 255
+        contenido:
+          type: string
+        proceso_ataque:
+          type: string
+        secuencia_ataque:
+          type: string
+        recomendaciones:
+          type: string
+        ejemplos_ataque:
+          type: string
+        origen_ataque:
+          type: string
+        objetivo_ataque:
+          type: string
+        canal_ataque:
+          type: string
+          maxLength: 30
+        fuente:
+          type: string
+          maxLength: 100
+        url:
+          type: string
+          format: uri
+          maxLength: 200
+        fecha:
+          type: string
+          format: date
+      required:
+      - contenido
+      - fecha
+      - fuente
+      - id
+      - titulo
+      - url
+    ArticuloRequest:
+      type: object
+      properties:
+        titulo:
+          type: string
+          minLength: 1
+          maxLength: 255
+        contenido:
+          type: string
+          minLength: 1
+        proceso_ataque:
+          type: string
+          minLength: 1
+        secuencia_ataque:
+          type: string
+          minLength: 1
+        recomendaciones:
+          type: string
+          minLength: 1
+        ejemplos_ataque:
+          type: string
+          minLength: 1
+        origen_ataque:
+          type: string
+          minLength: 1
+        objetivo_ataque:
+          type: string
+          minLength: 1
+        canal_ataque:
+          type: string
+          minLength: 1
+          maxLength: 30
+        fuente:
+          type: string
+          minLength: 1
+          maxLength: 100
+        url:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 200
+        fecha:
+          type: string
+          format: date
+      required:
+      - contenido
+      - fecha
+      - fuente
+      - titulo
+      - url
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+      required:
+      - id
+      - username
+    ChangePasswordRequest:
+      type: object
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        new_password_confirm:
+          type: string
+          writeOnly: true
+          minLength: 8
+      required:
+      - current_password
+      - new_password
+      - new_password_confirm
+    CustomTokenObtainPairRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    Ejercicio:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        tema:
+          type: string
+          maxLength: 120
+        pregunta:
+          type: string
+        concepto:
+          type: string
+        ejemplo:
+          type: string
+        retroalimentacion:
+          type: string
+        activo:
+          type: boolean
+        opciones:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpcionEjercicioPublic'
+          readOnly: true
+        fecha_creacion:
+          type: string
+          format: date-time
+          readOnly: true
+        fecha_actualizacion:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - concepto
+      - fecha_actualizacion
+      - fecha_creacion
+      - id
+      - opciones
+      - pregunta
+      - retroalimentacion
+      - tema
+    EjercicioRequest:
+      type: object
+      properties:
+        tema:
+          type: string
+          minLength: 1
+          maxLength: 120
+        pregunta:
+          type: string
+          minLength: 1
+        concepto:
+          type: string
+          minLength: 1
+        ejemplo:
+          type: string
+          minLength: 1
+        retroalimentacion:
+          type: string
+          minLength: 1
+        activo:
+          type: boolean
+      required:
+      - concepto
+      - pregunta
+      - retroalimentacion
+      - tema
+    GenerarSimulacionRequestRequest:
+      type: object
+      properties:
+        usuario_id:
+          type: integer
+        articulo_id:
+          type: integer
+        tipo_simulacion:
+          type: string
+          minLength: 1
+          default: correo phishing
+        prompt:
+          type: string
+        respuesta_usuario:
+          type: string
+    OpcionEjercicio:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ejercicio:
+          type: integer
+        texto:
+          type: string
+          maxLength: 255
+        orden:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          default: 1
+        es_correcta:
+          type: boolean
+        retroalimentacion_opcion:
+          type: string
+      required:
+      - ejercicio
+      - id
+      - texto
+    OpcionEjercicioPublic:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        texto:
+          type: string
+          maxLength: 255
+        orden:
+          type: integer
+          maximum: 32767
+          minimum: 0
+      required:
+      - id
+      - texto
+    OpcionEjercicioPublicRequest:
+      type: object
+      properties:
+        texto:
+          type: string
+          minLength: 1
+          maxLength: 255
+        orden:
+          type: integer
+          maximum: 32767
+          minimum: 0
+      required:
+      - texto
+    OpcionEjercicioRequest:
+      type: object
+      properties:
+        ejercicio:
+          type: integer
+        texto:
+          type: string
+          minLength: 1
+          maxLength: 255
+        orden:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          default: 1
+        es_correcta:
+          type: boolean
+        retroalimentacion_opcion:
+          type: string
+      required:
+      - ejercicio
+      - texto
+    PatchedArticuloRequest:
+      type: object
+      properties:
+        titulo:
+          type: string
+          minLength: 1
+          maxLength: 255
+        contenido:
+          type: string
+          minLength: 1
+        proceso_ataque:
+          type: string
+          minLength: 1
+        secuencia_ataque:
+          type: string
+          minLength: 1
+        recomendaciones:
+          type: string
+          minLength: 1
+        ejemplos_ataque:
+          type: string
+          minLength: 1
+        origen_ataque:
+          type: string
+          minLength: 1
+        objetivo_ataque:
+          type: string
+          minLength: 1
+        canal_ataque:
+          type: string
+          minLength: 1
+          maxLength: 30
+        fuente:
+          type: string
+          minLength: 1
+          maxLength: 100
+        url:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 200
+        fecha:
+          type: string
+          format: date
+    PatchedEjercicioRequest:
+      type: object
+      properties:
+        tema:
+          type: string
+          minLength: 1
+          maxLength: 120
+        pregunta:
+          type: string
+          minLength: 1
+        concepto:
+          type: string
+          minLength: 1
+        ejemplo:
+          type: string
+          minLength: 1
+        retroalimentacion:
+          type: string
+          minLength: 1
+        activo:
+          type: boolean
+    PatchedOpcionEjercicioRequest:
+      type: object
+      properties:
+        ejercicio:
+          type: integer
+        texto:
+          type: string
+          minLength: 1
+          maxLength: 255
+        orden:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          default: 1
+        es_correcta:
+          type: boolean
+        retroalimentacion_opcion:
+          type: string
+    PatchedSimulacionRequest:
+      type: object
+      properties:
+        usuario:
+          type: integer
+          nullable: true
+        articulo:
+          type: integer
+        simulacion_texto:
+          type: string
+          minLength: 1
+        resumen_justificacion:
+          type: string
+          minLength: 1
+        resultado:
+          $ref: '#/components/schemas/ResultadoEnum'
+        feedback:
+          type: string
+          minLength: 1
+    PatchedUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        password_confirm:
+          type: string
+          writeOnly: true
+          minLength: 8
+      required:
+      - password
+      - password_confirm
+      - username
+    ResponderEjercicioRequest:
+      type: object
+      properties:
+        ejercicio_id:
+          type: integer
+        opcion_id:
+          type: integer
+      required:
+      - ejercicio_id
+      - opcion_id
+    ResultadoEnum:
+      enum:
+      - correcto
+      - incorrecto
+      - sin-responder
+      type: string
+      description: |-
+        * `correcto` - Correcto
+        * `incorrecto` - Incorrecto
+        * `sin-responder` - Sin responder
+    Simulacion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        usuario:
+          type: integer
+          nullable: true
+        articulo:
+          type: integer
+        articulo_titulo:
+          type: string
+          readOnly: true
+        articulo_url:
+          type: string
+          readOnly: true
+        simulacion_texto:
+          type: string
+        resumen_justificacion:
+          type: string
+        resultado:
+          $ref: '#/components/schemas/ResultadoEnum'
+        feedback:
+          type: string
+        fecha_creacion:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - articulo
+      - articulo_titulo
+      - articulo_url
+      - fecha_creacion
+      - id
+    SimulacionRequest:
+      type: object
+      properties:
+        usuario:
+          type: integer
+          nullable: true
+        articulo:
+          type: integer
+        simulacion_texto:
+          type: string
+          minLength: 1
+        resumen_justificacion:
+          type: string
+          minLength: 1
+        resultado:
+          $ref: '#/components/schemas/ResultadoEnum'
+        feedback:
+          type: string
+          minLength: 1
+      required:
+      - articulo
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+      required:
+      - access
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+      required:
+      - id
+      - username
+    UserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+      required:
+      - password
+      - username
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

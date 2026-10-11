@@ -1,0 +1,324 @@
+from django.shortcuts import get_object_or_404
+from django.db.models import F, Count, Q
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework import permissions, status, viewsets
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.decorators import action
+
+from .models import Ejercicio, OpcionEjercicio, RespuestaEjercicio
+from .serializers import (
+    EjercicioSerializer,
+    OpcionEjercicioSerializer,
+    ResponderEjercicioSerializer,
+)
+
+
+@extend_schema_view(
+    list=extend_schema(tags=['Evaluaciones'], summary='Listar ejercicios', description='Obtiene los ejercicios de evaluación disponibles para detectar phishing.'),
+    retrieve=extend_schema(tags=['Evaluaciones'], summary='Obtener ejercicio', description='Devuelve el detalle de un ejercicio específico.'),
+    create=extend_schema(tags=['Evaluaciones'], summary='Crear ejercicio', description='Registra un nuevo ejercicio de entrenamiento.'),
+    update=extend_schema(tags=['Evaluaciones'], summary='Actualizar ejercicio', description='Actualiza todos los datos de un ejercicio existente.'),
+    partial_update=extend_schema(tags=['Evaluaciones'], summary='Actualizar ejercicio parcialmente', description='Modifica solo los campos enviados de un ejercicio existente.'),
+    destroy=extend_schema(tags=['Evaluaciones'], summary='Eliminar ejercicio', description='Elimina un ejercicio de la plataforma.'),
+)
+class EjercicioViewSet(viewsets.ModelViewSet):
+    queryset = Ejercicio.objects.prefetch_related('opciones').all()
+    serializer_class = EjercicioSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        activo = self.request.query_params.get('activo')
+
+        if activo is None:
+            return queryset
+
+        return queryset.filter(activo=activo.lower() == 'true')
+
+
+@extend_schema_view(
+    list=extend_schema(tags=['Evaluaciones'], summary='Listar opciones de ejercicio', description='Devuelve todas las opciones asociadas a los ejercicios de entrenamiento.'),
+    retrieve=extend_schema(tags=['Evaluaciones'], summary='Obtener opción', description='Devuelve una opción de ejercicio específica.'),
+    create=extend_schema(tags=['Evaluaciones'], summary='Crear opción', description='Registra una nueva opción para un ejercicio.'),
+    update=extend_schema(tags=['Evaluaciones'], summary='Actualizar opción', description='Actualiza todos los datos de una opción de ejercicio.'),
+    partial_update=extend_schema(tags=['Evaluaciones'], summary='Actualizar opción parcialmente', description='Modifica solo los campos enviados de una opción de ejercicio.'),
+    destroy=extend_schema(tags=['Evaluaciones'], summary='Eliminar opción', description='Elimina una opción de ejercicio del sistema.'),
+)
+class OpcionEjercicioViewSet(viewsets.ModelViewSet):
+    queryset = OpcionEjercicio.objects.select_related('ejercicio').all()
+    serializer_class = OpcionEjercicioSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Responder ejercicio',
+    description='Evalúa la elección del usuario y devuelve retroalimentación educativa contextualizada para reforzar el aprendizaje.',
+    request=ResponderEjercicioSerializer,
+    responses={200: None},
+)
+class ResponderEjercicioAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = ResponderEjercicioSerializer
+
+    def post(self, request):
+        serializer = ResponderEjercicioSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        ejercicio = get_object_or_404(Ejercicio, id=data['ejercicio_id'], activo=True)
+        opcion = get_object_or_404(OpcionEjercicio, id=data['opcion_id'], ejercicio=ejercicio)
+        opcion_correcta = get_object_or_404(OpcionEjercicio, ejercicio=ejercicio, es_correcta=True)
+
+        es_correcta = opcion.es_correcta
+
+        if request.user.is_authenticated:
+            RespuestaEjercicio.objects.create(
+                usuario=request.user,
+                ejercicio=ejercicio,
+                opcion_seleccionada=opcion,
+                es_correcta=es_correcta,
+            )
+
+        if es_correcta:
+            retroalimentacion = (
+                opcion.retroalimentacion_opcion
+                or 'Respuesta correcta. Buen trabajo identificando el escenario.'
+            )
+        else:
+            retroalimentacion = (
+                opcion.retroalimentacion_opcion
+                or ejercicio.retroalimentacion
+                or 'Respuesta incorrecta. Revisa el concepto y vuelve a intentarlo.'
+            )
+
+        return Response(
+            {
+                'ejercicio_id': ejercicio.id,
+                'tema': ejercicio.tema,
+                'es_correcta': es_correcta,
+                'retroalimentacion': retroalimentacion,
+                'respuesta_correcta': {
+                    'opcion_id': opcion_correcta.id,
+                    'texto': opcion_correcta.texto,
+                },
+                'concepto': ejercicio.concepto,
+                'ejemplo': ejercicio.ejemplo,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Obtener respuestas del usuario',
+    description='Devuelve la última respuesta que el usuario ha registrado en cada evaluación.',
+    responses={200: None},
+)
+class RespuestasEvaluacionAPIView(APIView):
+    """
+    Devuelve la última respuesta del usuario en cada evaluación.
+    Filtra para obtener solo la respuesta más reciente por ejercicio.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from django.db.models import Max
+
+        # Obtener el ID de la última respuesta de cada ejercicio
+        latest_respuestas = RespuestaEjercicio.objects.filter(
+            usuario=request.user
+        ).values('ejercicio').annotate(
+            latest_id=Max('id')
+        ).values_list('latest_id', flat=True)
+
+        # Obtener solo las últimas respuestas
+        respuestas = RespuestaEjercicio.objects.filter(
+            id__in=latest_respuestas
+        ).select_related('ejercicio').values(
+            'id', 'usuario', 'ejercicio', 'es_correcta', 'fecha_respuesta'
+        ).annotate(ejercicio_tema=F('ejercicio__tema')).order_by('-fecha_respuesta')
+
+        return Response(list(respuestas), status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Obtener totales de evaluaciones',
+    description='Devuelve el total de ejercicios activos disponibles.',
+    responses={200: None},
+)
+class TotalesEvaluacionAPIView(APIView):
+    """
+    Devuelve los totales de evaluaciones disponibles.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        total_evaluaciones = Ejercicio.objects.filter(activo=True).count()
+        return Response({'total': total_evaluaciones}, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Obtener evaluaciones pendientes',
+    description='Devuelve solo los ejercicios que el usuario aún no ha completado.',
+    responses={200: None},
+)
+class EvaluacionesPendientesAPIView(APIView):
+    """
+    Devuelve ejercicios que el usuario aún no ha respondido.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Obtener IDs de ejercicios respondidos por el usuario
+        ejercicios_respondidos = RespuestaEjercicio.objects.filter(
+            usuario=request.user
+        ).values_list('ejercicio_id', flat=True).distinct()
+
+        # Obtener ejercicios activos que no ha respondido
+        ejercicios_pendientes = Ejercicio.objects.filter(
+            activo=True
+        ).exclude(
+            id__in=ejercicios_respondidos
+        ).prefetch_related('opciones').order_by('id')
+
+        # Serializar con opciones
+        pendientes_data = []
+        for ejercicio in ejercicios_pendientes:
+            opciones = [
+                {
+                    'id': opcion.id,
+                    'texto': opcion.texto,
+                    'orden': opcion.orden,
+                }
+                for opcion in ejercicio.opciones.all()
+            ]
+
+            pendientes_data.append({
+                'id': ejercicio.id,
+                'tema': ejercicio.tema,
+                'pregunta': ejercicio.pregunta,
+                'concepto': ejercicio.concepto,
+                'ejemplo': ejercicio.ejemplo,
+                'opciones': opciones,
+            })
+
+        return Response({
+            'pendientes': pendientes_data,
+            'total_pendientes': len(pendientes_data),
+            'total_ejercicios': Ejercicio.objects.filter(activo=True).count(),
+        }, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Obtener estadísticas de progreso',
+    description='Devuelve porcentaje de aciertos, total respondidas y otras estadísticas (última respuesta por ejercicio).',
+    responses={200: None},
+)
+class EstadisticasEvaluacionAPIView(APIView):
+    """
+    Devuelve estadísticas detalladas del progreso en evaluaciones.
+    Solo cuenta la última respuesta de cada usuario por ejercicio.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Obtener la última respuesta del usuario por cada ejercicio
+        from django.db.models import Max
+
+        # Subquery para obtener el ID de la última respuesta de cada ejercicio
+        latest_respuestas = RespuestaEjercicio.objects.filter(
+            usuario=request.user
+        ).values('ejercicio').annotate(
+            latest_id=Max('id')
+        ).values_list('latest_id', flat=True)
+
+        # Obtener solo las últimas respuestas
+        ultimas_respuestas = RespuestaEjercicio.objects.filter(
+            id__in=latest_respuestas
+        ).select_related('ejercicio')
+
+        # Total de última respuestas
+        total_respuestas = len(ultimas_respuestas)
+
+        # Respuestas correctas (últimas)
+        respuestas_correctas = sum(1 for r in ultimas_respuestas if r.es_correcta)
+
+        # Total de ejercicios activos
+        total_ejercicios = Ejercicio.objects.filter(activo=True).count()
+
+        # Ejercicios respondidos (al menos una vez)
+        ejercicios_respondidos = total_respuestas
+
+        # Ejercicios pendientes
+        ejercicios_pendientes = total_ejercicios - ejercicios_respondidos
+
+        # Porcentaje de aciertos
+        porcentaje_aciertos = 0
+        if total_respuestas > 0:
+            porcentaje_aciertos = round((respuestas_correctas / total_respuestas) * 100, 2)
+
+        # Obtener datos por tema (última respuesta)
+        temas_dict = {}
+        for respuesta in ultimas_respuestas:
+            tema = respuesta.ejercicio.tema
+            if tema not in temas_dict:
+                temas_dict[tema] = {'correctas': 0, 'total': 0}
+
+            temas_dict[tema]['total'] += 1
+            if respuesta.es_correcta:
+                temas_dict[tema]['correctas'] += 1
+
+        temas = []
+        for tema, datos in sorted(temas_dict.items()):
+            correctas = datos['correctas']
+            total = datos['total']
+            porcentaje = round((correctas / total) * 100, 2) if total > 0 else 0
+            temas.append({
+                'tema': tema,
+                'total': total,
+                'correctas': correctas,
+                'porcentaje': porcentaje,
+            })
+
+        return Response({
+            'total_respuestas': total_respuestas,
+            'respuestas_correctas': respuestas_correctas,
+            'porcentaje_aciertos': porcentaje_aciertos,
+            'total_ejercicios': total_ejercicios,
+            'ejercicios_respondidos': ejercicios_respondidos,
+            'ejercicios_pendientes': ejercicios_pendientes,
+            'completado': ejercicios_pendientes == 0,
+            'estadisticas_por_tema': temas,
+        }, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Evaluaciones'],
+    summary='Resetear evaluaciones',
+    description='Borra todas las respuestas del usuario para empezar de nuevo.',
+    responses={200: None},
+)
+class ResetearEvaluacionesAPIView(APIView):
+    """
+    Elimina todas las respuestas del usuario, permitiendo empezar de nuevo.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            deleted_count, _ = RespuestaEjercicio.objects.filter(usuario=request.user).delete()
+            return Response({
+                'status': 'success',
+                'message': f'Se eliminaron {deleted_count} respuestas',
+                'respuestas_eliminadas': deleted_count,
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': str(e),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

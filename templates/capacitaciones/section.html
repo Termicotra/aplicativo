@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Capacitaciones{% endblock %}
+
+{% block content %}
+<style>
+    .cap-wrap {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .cap-card {
+        border: 1px solid #dfe5ef;
+        border-radius: 12px;
+        background: #ffffff;
+        padding: 18px;
+        margin-bottom: 16px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .cap-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #e6f4ea;
+        color: #18603b;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .cap-progress {
+        color: #475569;
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+    }
+
+    .opcion-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #dbe3ef;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background: #f8fbff;
+        cursor: pointer;
+    }
+
+    .opcion-item input[type='radio'] {
+        margin-top: 3px;
+        flex: 0 0 auto;
+    }
+
+    .opcion-texto {
+        flex: 1;
+        min-width: 0;
+        word-break: break-word;
+    }
+
+    .cap-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+    }
+
+    .btn-link {
+        display: inline-block;
+        padding: 8px 12px;
+        border: 1px solid #c8d2e3;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #1e293b;
+        background: #fff;
+    }
+
+    .result-card {
+        border-left: 4px solid #c8d2e3;
+        border-radius: 10px;
+        padding: 14px;
+        margin-top: 14px;
+        background: #f8fafc;
+    }
+
+    .result-card.ok {
+        border-left-color: #1f7a4d;
+        background: #edf9f1;
+    }
+
+    .result-card.bad {
+        border-left-color: #b5422c;
+        background: #fff1ef;
+    }
+</style>
+
+<div class="cap-wrap">
+    <h1>Modulo de Capacitaciones</h1>
+    <p>Ejercicios de seleccion multiple para practicar deteccion de phishing con concepto, ejemplo y retroalimentacion.</p>
+
+    {% if ejercicio %}
+        <section class="cap-card">
+            <div class="cap-progress">Ejercicio {{ indice_actual }} de {{ ejercicios_total }}</div>
+            <span class="cap-badge">{{ ejercicio.tema }}</span>
+            <h2>{{ ejercicio.pregunta }}</h2>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="ejercicio_id" value="{{ ejercicio.id }}">
+
+                {% for opcion in ejercicio.opciones.all %}
+                    <label class="opcion-item">
+                        <input type="radio" name="opcion_id" value="{{ opcion.id }}" required>
+                        <span class="opcion-texto">{{ opcion.texto }}</span>
+                    </label>
+                {% empty %}
+                    <p>No hay opciones cargadas para este ejercicio.</p>
+                {% endfor %}
+
+                <div class="cap-actions">
+                    <button class="btn" type="submit">Responder</button>
+                    {% if prev_ejercicio_id %}
+                        <a class="btn-link" href="{% url 'capacitaciones_section' %}?ejercicio={{ prev_ejercicio_id }}">Anterior</a>
+                    {% endif %}
+                    {% if next_ejercicio_id %}
+                        <a class="btn-link" href="{% url 'capacitaciones_section' %}?ejercicio={{ next_ejercicio_id }}">Siguiente</a>
+                    {% endif %}
+                </div>
+            </form>
+
+            {% if resultado %}
+                <div class="result-card {% if resultado.es_correcta %}ok{% else %}bad{% endif %}">
+                    <strong>{% if resultado.es_correcta %}Correcto{% else %}Incorrecto{% endif %}</strong>
+                    <p>{{ resultado.feedback }}</p>
+                    <p><strong>Respuesta correcta:</strong> {{ resultado.opcion_correcta.texto }}</p>
+                    <p><strong>Concepto:</strong> {{ ejercicio.concepto }}</p>
+                    <p><strong>Ejemplo:</strong> {{ ejercicio.ejemplo }}</p>
+                </div>
+            {% endif %}
+        </section>
+    {% else %}
+        <section class="cap-card">
+            <h2>No hay ejercicios activos</h2>
+            <p>Puedes cargar ejercicios desde el admin o ejecutar el comando de semilla.</p>
+            <pre>python manage.py seed_capacitaciones</pre>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

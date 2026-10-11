@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Login | Treck{% endblock %}
+
+{% block content %}
+<h1>Iniciar sesion</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="form-row">
+        <label for="id_username">Usuario</label><br>
+        {{ form.username }}
+    </div>
+    <div class="form-row">
+        <label for="id_password">Contrasena</label><br>
+        {{ form.password }}
+    </div>
+    <button class="btn" type="submit">Ingresar</button>
+</form>
+<p>Si no tienes cuenta, <a href="{% url 'register' %}">registrate aqui</a>.</p>
+{% endblock %}
