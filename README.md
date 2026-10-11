@@ -1,128 +1,125 @@
-# Treck — Simulador de capacitaciones anti-phishing
+# TRECK
 
-Breve: proyecto Django para generar simulaciones de phishing y capacitaciones basadas en artículos y IA.
+**TRECK** - Plataforma integral de educación y conciencia en ciberseguridad.
 
-## Requisitos
-- Python 3.10+
+**T**ecnología · **R**iesgo · **E**ducación · **C**onciencia · **K**now-how
+
+Una plataforma educativa integral para detección y prevención de phishing e ingeniería social, desarrollada en Django REST Framework.
+
+## Descripción General
+
+TRECK combina tecnología, evaluación de riesgos y educación pedagógica para desarrollar conciencia sobre ciberseguridad y proporcionar conocimiento práctico aplicable.
+
+El sistema proporciona tres módulos educativos interconectados:
+
+- **Capacitaciones**: Lecciones secuenciales sobre phishing e ingeniería social
+- **Simulaciones**: Escenarios realistas de ataque generados por IA basados en amenazas reales
+- **Evaluaciones**: Ejercicios interactivos para medir competencias específicas
+
+El sistema ingesta automáticamente noticias de ciberseguridad desde fuentes paraguayas (ABC Color, CERT Paraguay), extrae contexto de ataque usando IA, y genera simulaciones educativas dinámicas.
+
+## Características Principales
+
+- 🤖 **Generación de Simulaciones con IA**: Crea escenarios realistas de phishing usando GPT-4o-mini
+- 📊 **Seguimiento de Progreso Dinámico**: Calcula progreso en tiempo real desde datos de BD (33,33% cada módulo)
+- 🌍 **Ingesta Automatizada**: Scrapea y procesa artículos de seguridad cada 15 días (En el Despliegue cada 1 dia)
+- 🔍 **Filtrado Inteligente**: 4 niveles de validación para garantizar relevancia y calidad
+- 📱 **Multi-canal**: Soporta correo, SMS, WhatsApp y simulaciones web
+- 🔐 **Seguridad**: Validaciones contra inyección de prompts y coherencia de dominios
+
+## Requisitos Previos
+
+- Python 3.12+
+- PostgreSQL 14+
+- OpenAI API key
 - Git
-- PostgreSQL (requerido por la configuración actual del proyecto)
 
-## Instalación rápida (desarrollo)
-1. Clona el repositorio y sitúate en la carpeta del proyecto.
-
-2. Crea y activa un entorno virtual:
-
-   - Windows (PowerShell):
-   ```powershell
-   python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
-   ```
-
-   - macOS / Linux:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   ```
-
-3. Instala dependencias:
+## Instalación
 
 ```bash
+# 1. Clonar repositorio
+git clone <repository-url>
+cd aplicativo
+
+# 2. Crear entorno virtual
+python -m venv .venv
+source .venv/bin/activate  # macOS/Linux
+# o .venv\Scripts\activate  # Windows
+
+# 3. Instalar dependencias
 pip install -r requirements.txt
-```
 
-4. Configura variables de entorno (ejemplo mínimo):
+# 4. Configurar .env con:
+# DATABASE_URL=postgresql://user:password@localhost:5432/treck_db
+# OPENAI_API_KEY=sk-...
+# SECRET_KEY=tu-clave-secreta
 
-Create a `.env` file or export these env vars in tu entorno:
-
-- `DJANGO_SECRET_KEY` — clave secreta de Django
-- `DEBUG` — `True` (desarrollo) o `False` (producción)
-- `POSTGRES_DB` — nombre de la base de datos
-- `POSTGRES_USER` — usuario de PostgreSQL
-- `POSTGRES_PASSWORD` — contraseña de PostgreSQL
-- `POSTGRES_HOST` — host de PostgreSQL
-- `POSTGRES_PORT` — puerto de PostgreSQL
-- `OPENAI_API_KEY` — clave para la integración con el servicio de IA
-- `OPENAI_MODEL` — modelo por defecto (ej: `gpt-4o`)
-
-5. Aplica migraciones:
-
-```bash
+# 5. Crear BD
+createdb treck_db
 python manage.py migrate
-```
-
-6. (Opcional) Crea un superusuario para acceder al admin:
-
-```bash
-python manage.py createsuperuser
-```
-
-7. Carga datos iniciales (semillas):
-
-```bash
 python manage.py seed_capacitaciones
+python manage.py seed_evaluaciones
 ```
 
-8. Ejecuta el servidor de desarrollo:
+## Ejecución
 
 ```bash
+# Servidor de desarrollo
 python manage.py runserver
-```
 
-## Base de datos
-- El proyecto está configurado para PostgreSQL en `treck/settings.py`.
-- Las credenciales se leen desde las variables `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST` y `POSTGRES_PORT`.
-- Se incluye un script SQL de creación en `sql/create_all_tables_postgres.sql`.
+# Documentación: http://localhost:8000/api/docs/
 
-## Actualización de artículos
-- Hay un script para actualizar/recopilar artículos: `update_articles.py`.
-- Para tareas programadas revisa `docs/cron_job.md`.
+# Ingesta de artículos
+python manage.py shell
+>>> from articulos.ingestion import run_weekly_ingestion
+>>> run_weekly_ingestion()
 
-## Ingesta de artículos y generación de simulaciones
-Este proyecto incluye scripts para: (1) ingestar artículos desde fuentes configuradas y (2) generar simulaciones de phishing basadas en esos artículos.
-
-- Ingesta de artículos (ejecución manual):
-
-```bash
-# Ejecuta la ingesta y guarda artículos en la base de datos
-python update_articles.py
-```
-
-El script `update_articles.py` recolecta los artículos configurados en la app `articulos` y los almacena en la base de conocimiento usada por el sistema RAG. Para automatizarlo semanalmente revisa `docs/cron_job.md`.
-
-- Generación de simulaciones (ejecución manual):
-
-```bash
-# Genera simulaciones a partir de artículos y reglas/plantillas
+# Generación de simulaciones
 python generate_simulations.py
+python generate_simulations.py --all  # Regenerar todas
+
+# Scheduler automático (cada 15 días @ 3 AM)
+python scheduler.py
 ```
 
-El script `generate_simulations.py` crea simulaciones en la app `simulaciones` usando el contexto de los artículos almacenados y el servicio de IA configurado (requiere `OPENAI_API_KEY`). Puedes ejecutar ambos scripts en secuencia: primero la ingesta, luego la generación de simulaciones.
+## Endpoints Principales
 
-Ejemplo de flujo recomendado:
-
-```bash
-python update_articles.py
-python generate_simulations.py
+```
+POST   /api/users/auth/login/
+POST   /api/users/auth/register/
+GET    /api/users/mi-progreso/                          # Progreso dinámico
+GET    /api/capacitaciones/lecciones/
+POST   /api/capacitaciones/lecciones/{id}/marcar_completada/
+GET    /api/simulaciones/
+POST   /api/simulaciones/registrar-respuesta/
+GET    /api/evaluaciones/
+POST   /api/evaluaciones/responder/
+GET    /api/evaluaciones/estadisticas/
 ```
 
-Si prefieres una integración con tareas programadas, configura un cron o un job del sistema que ejecute `update_articles.py` semanalmente y, si lo deseas, `generate_simulations.py` después de la ingesta.
+## Estructura
 
-
-## Ejecutar tests
-
-```bash
-python manage.py test
+```
+aplicativo/
+├── articulos/           # Ingesta (ABC Color, CERT Paraguay)
+├── capacitaciones/      # Lecciones
+├── evaluaciones/        # Ejercicios
+├── simulaciones/        # Motor de IA
+├── users/              # Autenticación
+└── treck/              # Configuración
 ```
 
-## Notas de seguridad
-- Mantén las claves y secretos fuera del repositorio; usa variables de entorno.
-- En producción setear `DEBUG=False` y `ALLOWED_HOSTS` adecuadamente.
-- Revisa `treck/settings.py` para opciones de seguridad adicionales.
+## Notas de Desarrollo
 
-## Integración con IA
-- Se espera una variable `OPENAI_API_KEY` para los servicios que usan IA (archivo(s) en `simulaciones/ai_service.py`).
-- Protege y valida cualquier entrada de usuario que pueda influir en prompts para evitar prompt injection.
+- El progreso se calcula dinámicamente: cada módulo contribuye 1/3
+- Las simulaciones se validan contra 3 criterios: coherencia, especificidad, realismo
+- La ingesta filtra artículos en 4 niveles: Paraguay, relevancia, flujo de ataque, material útil
 
-## Recursos adicionales
-- Rutas y vistas principales en `treck/urls.py` y las apps `articulos`, `simulaciones`, `capacitaciones`, `users`.
-- Ver `docs/cron_job.md` para ejemplo de job semanal de ingestión de artículos.
+## Licencia
+
+Proyecto Final de Grado - Universidad Católica Nuestra Señora de la Asunción - Campus Guairá
+
+## Contacto
+
+- Autor: Federico Traversi
+- Email: federico.traversi@uc.edu.py
