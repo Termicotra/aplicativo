@@ -446,3 +446,55 @@ class TotalesSimulacionAPIView(APIView):
     def get(self, request):
         total_simulaciones = Simulacion.objects.count()
         return Response({'total': total_simulaciones}, status=status.HTTP_200_OK)
+
+
+def cantidad_a_mostrar(total_disponibles):
+    """Cantidad de simulaciones que ve cada usuario: 20, 15, o todas si hay menos de 15."""
+    if total_disponibles >= 20:
+        return 20
+    if total_disponibles >= 15:
+        return 15
+    return total_disponibles
+
+
+@extend_schema(
+    tags=['Simulaciones'],
+    summary='Obtener simulaciones del usuario',
+    description='Devuelve el cupo de simulaciones que el usuario debe responder: primero las que aún no respondió (más nuevas primero) y completa con las ya respondidas.',
+    responses={200: None},
+)
+class SimulacionesParaUsuarioAPIView(APIView):
+    """
+    Selecciona el cupo de simulaciones del usuario autenticado.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        total_disponibles = Simulacion.objects.count()
+        cantidad = cantidad_a_mostrar(total_disponibles)
+
+        respondidas_ids = RespuestaSimulacion.objects.filter(usuario=request.user).values('simulacion_id')
+
+        pendientes = list(
+            Simulacion.objects.select_related('articulo')
+            .exclude(id__in=respondidas_ids)
+            .order_by('-fecha_creacion')[:cantidad]
+        )
+        faltantes = cantidad - len(pendientes)
+        respondidas = []
+        if faltantes > 0:
+            respondidas = list(
+                Simulacion.objects.select_related('articulo')
+                .filter(id__in=respondidas_ids)
+                .order_by('-fecha_creacion')[:faltantes]
+            )
+
+        seleccion = pendientes + respondidas
+        return Response(
+            {
+                'total_disponibles': total_disponibles,
+                'cantidad_mostrada': len(seleccion),
+                'simulaciones': SimulacionSerializer(seleccion, many=True).data,
+            },
+            status=status.HTTP_200_OK,
+        )

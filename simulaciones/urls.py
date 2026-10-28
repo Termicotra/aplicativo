@@ -8,6 +8,7 @@ from .views import (
     RegistrarRespuestaSimulacion,
     RespuestasSimulacionAPIView,
     TotalesSimulacionAPIView,
+    SimulacionesParaUsuarioAPIView,
 )
 
 router = DefaultRouter()
@@ -20,6 +21,7 @@ custom_urls = [
     path('registrar-respuesta/', RegistrarRespuestaSimulacion.as_view(), name='registrar-respuesta'),
     path('mis-respuestas/', RespuestasSimulacionAPIView.as_view(), name='mis-respuestas'),
     path('totales/', TotalesSimulacionAPIView.as_view(), name='totales'),
+    path('para-usuario/', SimulacionesParaUsuarioAPIView.as_view(), name='para-usuario'),
 ]
 
 urlpatterns = custom_urls + router.urls

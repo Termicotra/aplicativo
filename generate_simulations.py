@@ -25,14 +25,9 @@ ENTIDADES_REALES_PARAGUAY = {
     'ATLAS': 'Banco Atlas',
     'BANCOP': 'Bancop',
     'INTERFISA': 'Interfisa',
-    'SOLAR': 'Banco Solar',
     'UENO': 'Banco Ueno',
-    'ZETA': 'Banco Zeta',
     'BNF': 'Banco Nacional de Fomento',
     'BCP': 'Banco Central del Paraguay',
-    # Bancos extranjeros
-    'CITIBANK': 'Citibank',
-    'BANCO DO BRASIL': 'Banco do Brasil',
     # Gobierno y servicios
     'IPS': 'Instituto de Previsión Social',
     'SET': 'Secretaría de Impuestos',
@@ -42,7 +37,6 @@ ENTIDADES_REALES_PARAGUAY = {
     'COPACO': 'COPACO',
     'CERT': 'CERT.py',
     'MUNICIPALIDAD': 'Municipalidades',
-    'MTESS': 'Ministerio de Trabajo, Empleo y Seguridad Social',
     'MOPC': 'Ministerio de Obras Públicas y Comunicaciones',
     'STP': 'Secretaría Técnica de Planificación',
     'SEAM': 'Secretaría del Ambiente',
