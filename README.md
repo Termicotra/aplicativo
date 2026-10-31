@@ -22,7 +22,7 @@ El sistema ingesta automáticamente noticias de ciberseguridad desde fuentes par
 
 - 🤖 **Generación de Simulaciones con IA**: Crea escenarios realistas de phishing usando GPT-4o-mini
 - 📊 **Seguimiento de Progreso Dinámico**: Calcula progreso en tiempo real desde datos de BD (33,33% cada módulo)
-- 🌍 **Ingesta Automatizada**: Scrapea y procesa artículos de seguridad cada 15 días (En el Despliegue cada 1 dia)
+- 🌍 **Ingesta Automatizada**: Scrapea y procesa artículos de seguridad y regenera simulaciones cada 15 días mediante `python manage.py refresh_data`. En Heroku, un job programado (Heroku Scheduler) ejecuta ese comando cada 24 horas; el comando solo refresca si han pasado 15 días desde la última ejecución
 - 🔍 **Filtrado Inteligente**: 4 niveles de validación para garantizar relevancia y calidad
 - 📱 **Multi-canal**: Soporta correo, SMS, WhatsApp y simulaciones web
 - 🔐 **Seguridad**: Validaciones contra inyección de prompts y coherencia de dominios
@@ -69,17 +69,13 @@ python manage.py runserver
 
 # Documentación: http://localhost:8000/api/docs/
 
-# Ingesta de artículos
-python manage.py shell
->>> from articulos.ingestion import run_weekly_ingestion
->>> run_weekly_ingestion()
+# Refresco de artículos y simulaciones (ingesta + generación)
+python manage.py refresh_data
+python manage.py refresh_data --force  # Ignora el plazo de 15 días
 
 # Generación de simulaciones
 python generate_simulations.py
 python generate_simulations.py --all  # Regenerar todas
-
-# Scheduler automático (cada 15 días @ 3 AM)
-python scheduler.py
 ```
 
 ## Endpoints Principales

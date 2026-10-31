@@ -459,42 +459,60 @@ def cantidad_a_mostrar(total_disponibles):
 
 @extend_schema(
     tags=['Simulaciones'],
-    summary='Obtener simulaciones del usuario',
-    description='Devuelve el cupo de simulaciones que el usuario debe responder: primero las que aún no respondió (más nuevas primero) y completa con las ya respondidas.',
+    summary='Obtener simulaciones pendientes del usuario',
+    description='Devuelve las simulaciones que el usuario aún debe responder en la ronda actual, junto con el progreso de la ronda.',
     responses={200: None},
 )
 class SimulacionesParaUsuarioAPIView(APIView):
     """
-    Selecciona el cupo de simulaciones del usuario autenticado.
+    Devuelve las simulaciones pendientes de la ronda actual del usuario autenticado.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         total_disponibles = Simulacion.objects.count()
-        cantidad = cantidad_a_mostrar(total_disponibles)
+        cantidad_ronda = cantidad_a_mostrar(total_disponibles)
 
-        respondidas_ids = RespuestaSimulacion.objects.filter(usuario=request.user).values('simulacion_id')
+        respuestas = RespuestaSimulacion.objects.filter(usuario=request.user)
+        respondidas = respuestas.count()
+        correctas = respuestas.filter(es_correcta=True).count()
 
-        pendientes = list(
+        # Solo se piden las que faltan para completar la ronda, y nunca las ya respondidas
+        restantes = max(cantidad_ronda - respondidas, 0)
+        pendientes = (
             Simulacion.objects.select_related('articulo')
-            .exclude(id__in=respondidas_ids)
-            .order_by('-fecha_creacion')[:cantidad]
+            .exclude(id__in=respuestas.values('simulacion_id'))
+            .order_by('-fecha_creacion')[:restantes]
         )
-        faltantes = cantidad - len(pendientes)
-        respondidas = []
-        if faltantes > 0:
-            respondidas = list(
-                Simulacion.objects.select_related('articulo')
-                .filter(id__in=respondidas_ids)
-                .order_by('-fecha_creacion')[:faltantes]
-            )
 
-        seleccion = pendientes + respondidas
         return Response(
             {
                 'total_disponibles': total_disponibles,
-                'cantidad_mostrada': len(seleccion),
-                'simulaciones': SimulacionSerializer(seleccion, many=True).data,
+                'cantidad_ronda': cantidad_ronda,
+                'respondidas': respondidas,
+                'correctas': correctas,
+                'simulaciones': SimulacionSerializer(pendientes, many=True).data,
             },
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    tags=['Simulaciones'],
+    summary='Reiniciar práctica de simulaciones',
+    description='Borra las respuestas del usuario en simulaciones para empezar una nueva ronda.',
+    request=None,
+    responses={200: None},
+)
+class ReiniciarSimulacionesAPIView(APIView):
+    """
+    Borra las respuestas del usuario autenticado en simulaciones.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        deleted_count, _ = RespuestaSimulacion.objects.filter(usuario=request.user).delete()
+        return Response(
+            {'message': f'Se eliminaron {deleted_count} respuestas', 'respuestas_eliminadas': deleted_count},
             status=status.HTTP_200_OK,
         )
