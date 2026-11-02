@@ -1,7 +1,5 @@
 from django.core.management.base import BaseCommand
 from django.db import connection
-from articulos.models import Articulo
-from simulaciones.models import Simulacion
 from django.core.cache import cache
 import sys
 import os
@@ -48,18 +46,8 @@ class Command(BaseCommand):
         self.stdout.write('=' * 60 + '\n')
 
         try:
-            # Paso 1: Borrar datos de simulaciones
-            self.stdout.write('1. Borrando simulaciones...')
-            count = Simulacion.objects.all().delete()[0]
-            self.stdout.write(self.style.SUCCESS(f'   OK {count} simulaciones borradas'))
-
-            # Paso 2: Borrar datos de artículos
-            self.stdout.write('2. Borrando articulos...')
-            count = Articulo.objects.all().delete()[0]
-            self.stdout.write(self.style.SUCCESS(f'   OK {count} articulos borrados'))
-
-            # Paso 3: Ejecutar ingestion de artículos
-            self.stdout.write('3. Ejecutando ingestion de articulos...')
+            # Paso 1: Ejecutar ingestion de artículos (no borra; reutiliza los existentes por URL)
+            self.stdout.write('1. Ejecutando ingestion de articulos...')
             try:
                 from articulos.ingestion import main as ingest_main
                 ingest_main()
@@ -67,8 +55,8 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stdout.write(self.style.WARNING(f'   WARN Ingestion fallo: {e}'))
 
-            # Paso 4: Ejecutar generación de simulaciones
-            self.stdout.write('4. Generando simulaciones...')
+            # Paso 2: Generar simulaciones solo para artículos que aún no tienen una
+            self.stdout.write('2. Generando simulaciones...')
             try:
                 from generate_simulations import main as sim_main
                 sim_main()
