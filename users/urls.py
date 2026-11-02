@@ -8,12 +8,13 @@ from .views import ChangePasswordAPIView, LoginView, RegisterAPIView, UserViewSe
 router = DefaultRouter()
 router.register(r'', UserViewSet, basename='user')
 
-urlpatterns = router.urls
-
-urlpatterns += [
+# Las rutas explícitas van antes que el router: su detalle (<pk>/) capturaría 'mi-progreso' como pk
+urlpatterns = [
 	path('auth/login/', LoginView.as_view(), name='api_login'),
 	path('auth/login/refresh/', TokenRefreshView.as_view(), name='api_token_refresh'),
 	path('auth/register/', RegisterAPIView.as_view(), name='api_register'),
 	path('auth/change-password/', ChangePasswordAPIView.as_view(), name='api_change_password'),
 	path('mi-progreso/', MiProgresoAPIView.as_view(), name='mi_progreso'),
 ]
+
+urlpatterns += router.urls
